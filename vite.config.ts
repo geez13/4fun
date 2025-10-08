@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tsconfigPaths from "vite-tsconfig-paths";
 import { traeBadgePlugin } from 'vite-plugin-trae-solo-badge';
+import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -23,6 +24,10 @@ export default defineConfig({
       autoThemeTarget: '#root'
     }), 
     tsconfigPaths(),
+    nodePolyfills({
+      // Whether to polyfill `node:` protocol imports.
+      protocolImports: true,
+    }),
   ],
   server: {
     proxy: {
@@ -43,5 +48,8 @@ export default defineConfig({
         },
       }
     }
+  },
+  define: {
+    global: 'globalThis',
   }
 })
