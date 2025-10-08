@@ -2,12 +2,8 @@
  * This is a API server
  */
 
-import express, {
-  type Request,
-  type Response,
-  type NextFunction,
-  type Application,
-} from 'express'
+import express from 'express'
+import type { Request, Response, NextFunction, Application } from 'express'
 import cors from 'cors'
 import path from 'path'
 import dotenv from 'dotenv'
@@ -24,7 +20,7 @@ const __dirname = path.dirname(__filename)
 // load env
 dotenv.config()
 
-const app: Application = express()
+const app = express()
 
 app.use(cors())
 app.use(express.json({ limit: '10mb' }))
