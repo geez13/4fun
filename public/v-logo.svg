@@ -1,0 +1,35 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="vSignGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4F46E5;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#06B6D4;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#10B981;stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="1" dy="2" stdDeviation="2" flood-color="rgba(0,0,0,0.3)"/>
+    </filter>
+  </defs>
+  
+  <!-- Hand base -->
+  <ellipse cx="16" cy="24" rx="8" ry="6" fill="url(#vSignGradient)" filter="url(#shadow)" />
+  
+  <!-- Thumb -->
+  <ellipse cx="10" cy="20" rx="2.5" ry="4" fill="url(#vSignGradient)" transform="rotate(-30 10 20)" />
+  
+  <!-- Index finger -->
+  <ellipse cx="13" cy="12" rx="2" ry="8" fill="url(#vSignGradient)" transform="rotate(-15 13 12)" filter="url(#shadow)" />
+  
+  <!-- Middle finger -->
+  <ellipse cx="19" cy="10" rx="2" ry="9" fill="url(#vSignGradient)" transform="rotate(15 19 10)" filter="url(#shadow)" />
+  
+  <!-- Ring finger (folded) -->
+  <ellipse cx="22" cy="18" rx="1.5" ry="3" fill="url(#vSignGradient)" transform="rotate(45 22 18)" />
+  
+  <!-- Pinky (folded) -->
+  <ellipse cx="24" cy="20" rx="1.2" ry="2.5" fill="url(#vSignGradient)" transform="rotate(60 24 20)" />
+  
+  <!-- Highlights for 3D effect -->
+  <ellipse cx="14" cy="22" rx="3" ry="2" fill="rgba(255,255,255,0.2)" />
+  <ellipse cx="13" cy="8" rx="1" ry="4" fill="rgba(255,255,255,0.3)" transform="rotate(-15 13 8)" />
+  <ellipse cx="19" cy="6" rx="1" ry="4" fill="rgba(255,255,255,0.3)" transform="rotate(15 19 6)" />
+</svg>
