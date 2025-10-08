@@ -117,7 +117,7 @@ const ConditionalUploadZone: React.FC<ConditionalUploadZoneProps> = ({
     }
   }, [lastFile, handleFileSelect]);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
+  const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     if (externalOnDrop) {
       externalOnDrop(e);
     } else {
@@ -131,7 +131,7 @@ const ConditionalUploadZone: React.FC<ConditionalUploadZoneProps> = ({
     }
   }, [externalOnDrop, handleFileSelect]);
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
+  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     if (externalOnDragOver) {
       externalOnDragOver(e);
     } else {
@@ -140,7 +140,7 @@ const ConditionalUploadZone: React.FC<ConditionalUploadZoneProps> = ({
     }
   }, [externalOnDragOver]);
 
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
+  const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     if (externalOnDragLeave) {
       externalOnDragLeave(e);
     } else {

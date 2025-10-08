@@ -208,7 +208,11 @@ export default function Editor() {
               requiredTokens={1}
               onAccessGranted={handleTokenAccessGranted}
               onAccessDenied={handleTokenAccessDenied}
-            />
+            >
+              <div className="text-center text-gray-400">
+                Connect your wallet and verify token ownership to access V-Sign Magic features.
+              </div>
+            </TokenGateChecker>
           </div>
 
           {/* Tab Content */}
