@@ -14,13 +14,13 @@ const router = express.Router();
 router.post('/verify', async (req: Request, res: Response) => {
   try {
     console.log('=== Token Verification API Called ===');
-    const { walletAddress, signature, message, userId } = req.body;
+    const { walletAddress, signature, message, userId } = (req as any).body;
     console.log(`Request body:`, { walletAddress, signature: signature?.substring(0, 20) + '...', message, userId });
 
     // Validate required fields
     if (!walletAddress || !signature || !message) {
       console.log('Missing required fields');
-      return res.status(400).json({
+      return (res as any).status(400).json({
         success: false,
         error: 'Missing required fields: walletAddress, signature, message'
       });
@@ -37,7 +37,7 @@ router.post('/verify', async (req: Request, res: Response) => {
     const result = await verifyTokenAccess(verificationRequest, userId || null);
 
     if (result.error) {
-      return res.status(400).json({
+      return (res as any).status(400).json({
         success: false,
         error: result.error,
         hasAccess: result.hasAccess,
@@ -54,7 +54,7 @@ router.post('/verify', async (req: Request, res: Response) => {
       sessionToken: result.sessionToken ? 'present' : 'none'
     });
 
-    return res.status(200).json({
+    return (res as any).status(200).json({
       success: true,
       data: {
         hasAccess: result.hasAccess,
@@ -70,7 +70,7 @@ router.post('/verify', async (req: Request, res: Response) => {
 
   } catch (error) {
     console.error('Token verification API error:', error);
-    return res.status(500).json({
+    return (res as any).status(500).json({
       success: false,
       error: 'Internal server error during token verification'
     });
@@ -83,10 +83,10 @@ router.post('/verify', async (req: Request, res: Response) => {
  */
 router.post('/validate-session', async (req: Request, res: Response) => {
   try {
-    const { sessionToken } = req.body;
+    const { sessionToken } = (req as any).body;
 
     if (!sessionToken) {
-      return res.status(400).json({
+      return (res as any).status(400).json({
         success: false,
         error: 'Session token is required'
       });
@@ -94,7 +94,7 @@ router.post('/validate-session', async (req: Request, res: Response) => {
 
     const isValid = await validateUploadSession(sessionToken);
 
-    return res.status(200).json({
+    return (res as any).status(200).json({
       success: true,
       isValid,
       message: isValid ? 'Session is valid' : 'Session is invalid or expired'
@@ -102,7 +102,7 @@ router.post('/validate-session', async (req: Request, res: Response) => {
 
   } catch (error) {
     console.error('Session validation API error:', error);
-    return res.status(500).json({
+    return (res as any).status(500).json({
       success: false,
       error: 'Internal server error during session validation'
     });
@@ -115,7 +115,7 @@ router.post('/validate-session', async (req: Request, res: Response) => {
  */
 router.get('/config', async (req: Request, res: Response) => {
   try {
-    return res.status(200).json({
+    return (res as any).status(200).json({
       success: true,
       config: {
         solTokenAddress: 'So11111111111111111111111111111111111111111',
@@ -128,7 +128,7 @@ router.get('/config', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Token config API error:', error);
-    return res.status(500).json({
+    return (res as any).status(500).json({
       success: false,
       error: 'Internal server error'
     });
