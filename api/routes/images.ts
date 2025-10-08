@@ -181,7 +181,7 @@ router.post('/:imageId/process-vsign', optionalTokenAccess, async (req: Request,
     
     // Validate UUID format
     if (!isValidUUID(imageId)) {
-      return res.status(400).json({
+      return (res as any).status(400).json({
         success: false,
         error: 'Invalid image ID format',
       });
@@ -423,7 +423,7 @@ router.get('/health/services', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Health check error:', error);
-    res.status(500).json({
+    (res as any).status(500).json({
       success: false,
       error: 'Health check failed',
       message: error instanceof Error ? error.message : 'Unknown error'
@@ -434,7 +434,7 @@ router.get('/health/services', async (req: Request, res: Response) => {
 // Get image by ID - MUST be last to avoid catching other routes
 router.get('/:imageId', async (req: Request, res: Response) => {
   try {
-    const { imageId } = req.params;
+    const { imageId } = (req as any).params;
     
     // Validate UUID format
     if (!isValidUUID(imageId)) {
@@ -446,19 +446,19 @@ router.get('/:imageId', async (req: Request, res: Response) => {
 
     const imageRecord = await supabaseService.getImageRecord(imageId);
     if (!imageRecord) {
-      return res.status(404).json({
+      return (res as any).status(404).json({
         success: false,
         error: 'Image not found',
       });
     }
 
-    res.json({
+    (res as any).json({
       success: true,
       image: imageRecord,
     });
   } catch (error) {
     console.error('Get image error:', error);
-    res.status(500).json({
+    (res as any).status(500).json({
       success: false,
       error: 'Failed to get image',
     });
