@@ -35,7 +35,7 @@ router.post('/upload', upload.single('image'), async (req: Request, res: Respons
   try {
     console.log('🚀 Upload endpoint called');
     
-    if (!req.file) {
+    if (!(req as any).file) {
       console.error('❌ No image file provided');
       return (res as any).status(400).json({
         success: false,
@@ -43,8 +43,8 @@ router.post('/upload', upload.single('image'), async (req: Request, res: Respons
       });
     }
 
-    const { userId } = req.body;
-    const file = req.file;
+    const { userId } = (req as any).body;
+    const file = (req as any).file;
 
     console.log('📁 File details:', {
       originalname: file.originalname,
@@ -74,7 +74,7 @@ router.post('/upload', upload.single('image'), async (req: Request, res: Respons
 
     if (!imageRecord) {
       console.error('❌ Failed to create image record');
-      return res.status(500).json({
+      return (res as any).status(500).json({
         success: false,
         error: 'Failed to save image record',
       });
@@ -96,14 +96,14 @@ router.post('/upload', upload.single('image'), async (req: Request, res: Respons
         : 'Image uploaded to temporary storage. Configure Supabase for persistent storage.',
     };
 
-    res.json(response);
+    (res as any).json(response);
   } catch (error) {
     console.error('❌ Upload error details:', {
       message: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
       error: error
     });
-    res.status(500).json({
+    (res as any).status(500).json({
       success: false,
       error: 'Failed to upload image',
       details: error instanceof Error ? error.message : 'Unknown error'
@@ -114,15 +114,15 @@ router.post('/upload', upload.single('image'), async (req: Request, res: Respons
 // Token-gated upload endpoint
 router.post('/upload-gated', requireTokenAccess, upload.single('image'), async (req: Request, res: Response) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({
+    if (!(req as any).file) {
+      return (res as any).status(400).json({
         success: false,
         error: 'No image file provided',
       });
     }
 
-    const { userId } = req.body;
-    const file = req.file;
+    const { userId } = (req as any).body;
+    const file = (req as any).file;
 
     // Convert buffer to base64 for storage
     const base64Data = file.buffer.toString('base64');
@@ -137,11 +137,11 @@ router.post('/upload-gated', requireTokenAccess, upload.single('image'), async (
       mime_type: file.mimetype,
       status: 'uploaded',
       token_gated: true, // Mark as token-gated upload
-      verification_id: req.tokenVerification?.verificationId || null
+      verification_id: (req as any).tokenVerification?.verificationId || null
     });
 
     if (!imageRecord) {
-      return res.status(500).json({
+      return (res as any).status(500).json({
         success: false,
         error: 'Failed to save image record',
       });
@@ -160,10 +160,10 @@ router.post('/upload-gated', requireTokenAccess, upload.single('image'), async (
       message: 'Token-gated image uploaded successfully with SOL verification',
     };
 
-    res.json(response);
+    (res as any).json(response);
   } catch (error) {
     console.error('Token-gated upload error:', error);
-    res.status(500).json({
+    (res as any).status(500).json({
       success: false,
       error: 'Failed to upload image',
     });
@@ -177,7 +177,7 @@ router.post('/:imageId/process-vsign', optionalTokenAccess, async (req: Request,
   const startTime = Date.now();
   
   try {
-    const { imageId } = req.params;
+    const { imageId } = (req as any).params;
     
     // Validate UUID format
     if (!isValidUUID(imageId)) {
@@ -186,13 +186,13 @@ router.post('/:imageId/process-vsign', optionalTokenAccess, async (req: Request,
         error: 'Invalid image ID format',
       });
     }
-    const { prompt, style = 'natural' } = req.body;
+    const { prompt, style = 'natural' } = (req as any).body;
 
     console.log('🚀 Processing ✌️-sign request:', { imageId, style, prompt: prompt ? 'custom' : 'default' });
 
     if (!imageId) {
       console.error('❌ Missing imageId in request');
-      return res.status(400).json({
+      return (res as any).status(400).json({
         success: false,
         error: 'Image ID is required',
       });
@@ -203,7 +203,7 @@ router.post('/:imageId/process-vsign', optionalTokenAccess, async (req: Request,
     const imageRecord = await supabaseService.getImageRecord(imageId);
     if (!imageRecord) {
       console.error('❌ Image not found:', imageId);
-      return res.status(404).json({
+      return (res as any).status(404).json({
         success: false,
         error: 'Image not found',
       });
@@ -275,7 +275,7 @@ router.post('/:imageId/process-vsign', optionalTokenAccess, async (req: Request,
       const totalTime = Date.now() - startTime;
       console.log('🎉 ✌️-sign processing completed successfully in', totalTime, 'ms');
 
-      res.json({
+      (res as any).json({
         success: true,
         data: {
           jobId: processingJob?.id || 'unknown',
@@ -301,7 +301,7 @@ router.post('/:imageId/process-vsign', optionalTokenAccess, async (req: Request,
       const totalTime = Date.now() - startTime;
       console.log('💥 Processing failed after', totalTime, 'ms');
 
-      res.status(500).json({
+      (res as any).status(500).json({
         success: false,
         error: result.error || 'Failed to process image',
         processingTime: result.processingTime / 1000,
@@ -310,7 +310,7 @@ router.post('/:imageId/process-vsign', optionalTokenAccess, async (req: Request,
   } catch (error) {
     const totalTime = Date.now() - startTime;
     console.error('💥 Processing route error after', totalTime, 'ms:', error);
-    res.status(500).json({
+    (res as any).status(500).json({
       success: false,
       error: 'Failed to process image',
     });
@@ -328,7 +328,7 @@ router.get('/user', async (req: Request, res: Response) => {
     
     const images = await supabaseService.getUserImages(defaultUserId, limit);
 
-    res.json({
+    (res as any).json({
       success: true,
       images,
       count: images.length,
@@ -345,7 +345,7 @@ router.get('/user', async (req: Request, res: Response) => {
 // Get user images (for gallery) - with userId parameter
 router.get('/user/:userId', async (req: Request, res: Response) => {
   try {
-    const { userId } = req.params;
+    const { userId } = (req as any).params;
     const limit = parseInt((req as any).query.limit as string) || 20;
     
     // Validate UUID format
@@ -365,7 +365,7 @@ router.get('/user/:userId', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Get user images error:', error);
-    res.status(500).json({
+    (res as any).status(500).json({
       success: false,
       error: 'Failed to get user images',
     });
