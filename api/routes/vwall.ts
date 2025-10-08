@@ -1,4 +1,5 @@
-import { Router, Request, Response } from 'express';
+import { Router } from 'express';
+import type { Request, Response } from 'express';
 import { supabase } from '../services/supabaseService.js';
 
 const router = Router();
@@ -172,8 +173,8 @@ router.get('/images', async (req: Request, res: Response) => {
   try {
     console.log('🖼️  VWall API: Fetching images...');
     
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 20;
+    const page = parseInt((req as any).query.page as string) || 1;
+    const limit = parseInt((req as any).query.limit as string) || 20;
     const offset = (page - 1) * limit;
 
     // Removed forced demo mode - now fetching real user images from database
@@ -183,7 +184,7 @@ router.get('/images', async (req: Request, res: Response) => {
       console.log('⚠️  VWall API: Supabase not configured, returning demo images');
       const demoImages = getDemoImages(limit);
       
-      return res.json({
+      return (res as any).json({
         success: true,
         data: demoImages,
         pagination: {
@@ -319,7 +320,7 @@ router.get('/images', async (req: Request, res: Response) => {
 
     console.log(`✅ VWall API: Returning ${allImages.length} images`);
 
-    res.json({
+    (res as any).json({
       success: true,
       data: allImages,
       pagination: {
@@ -335,15 +336,15 @@ router.get('/images', async (req: Request, res: Response) => {
     
     // Even if there's an error, try to return demo images
     try {
-      const demoImages = getDemoImages(parseInt(req.query.limit as string) || 20);
+      const demoImages = getDemoImages(parseInt((req as any).query.limit as string) || 20);
       console.log('🔄 VWall API: Returning demo images due to error');
       
-      res.json({
+      (res as any).json({
         success: true,
         data: demoImages,
         pagination: {
-          page: parseInt(req.query.page as string) || 1,
-          limit: parseInt(req.query.limit as string) || 20,
+          page: parseInt((req as any).query.page as string) || 1,
+          limit: parseInt((req as any).query.limit as string) || 20,
           hasMore: false
         },
         mode: 'demo',
@@ -351,7 +352,7 @@ router.get('/images', async (req: Request, res: Response) => {
       });
     } catch (fallbackError) {
       console.error('❌ VWall API: Even demo images failed:', fallbackError);
-      res.status(500).json({
+      (res as any).status(500).json({
         success: false,
         error: 'Failed to fetch images'
       });

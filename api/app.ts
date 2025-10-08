@@ -40,7 +40,7 @@ app.use('/api/vwall', vwallRoutes)
 app.use(
   '/api/health',
   (req: Request, res: Response, next: NextFunction): void => {
-    res.status(200).json({
+    (res as any).status(200).json({
       success: true,
       message: 'ok',
     })
@@ -51,7 +51,7 @@ app.use(
  * error handler middleware
  */
 app.use((error: Error, req: Request, res: Response, next: NextFunction) => {
-  res.status(500).json({
+  (res as any).status(500).json({
     success: false,
     error: 'Server internal error',
   })
@@ -61,7 +61,7 @@ app.use((error: Error, req: Request, res: Response, next: NextFunction) => {
  * 404 handler
  */
 app.use((req: Request, res: Response) => {
-  res.status(404).json({
+  (res as any).status(404).json({
     success: false,
     error: 'API not found',
   })
