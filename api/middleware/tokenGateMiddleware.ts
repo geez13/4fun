@@ -23,10 +23,10 @@ export async function requireTokenAccess(
   next: NextFunction
 ): Promise<void> {
   try {
-    const sessionToken = req.headers['x-session-token'] as string || req.body.sessionToken;
+    const sessionToken = (req as any).headers['x-session-token'] as string || (req as any).body.sessionToken;
 
     if (!sessionToken) {
-      res.status(401).json({
+      (res as any).status(401).json({
         success: false,
         error: 'Token verification required',
         code: 'TOKEN_REQUIRED',
@@ -39,7 +39,7 @@ export async function requireTokenAccess(
     const isValid = await validateUploadSession(sessionToken);
 
     if (!isValid) {
-      res.status(403).json({
+      (res as any).status(403).json({
         success: false,
         error: 'Invalid or expired token session',
         code: 'TOKEN_INVALID',
@@ -49,16 +49,16 @@ export async function requireTokenAccess(
     }
 
     // Add token verification data to request
-    req.tokenVerification = {
+    (req as any).tokenVerification = {
       sessionToken,
       verificationId: '', // This could be extracted from session if needed
       hasAccess: true
     };
 
-    next();
+    (next as any)();
   } catch (error) {
     console.error('Token gate middleware error:', error);
-    res.status(500).json({
+    (res as any).status(500).json({
       success: false,
       error: 'Token verification failed',
       code: 'TOKEN_ERROR',
@@ -77,13 +77,13 @@ export async function optionalTokenAccess(
   next: NextFunction
 ): Promise<void> {
   try {
-    const sessionToken = req.headers['x-session-token'] as string || req.body.sessionToken;
+    const sessionToken = (req as any).headers['x-session-token'] as string || (req as any).body.sessionToken;
 
     if (sessionToken) {
       const isValid = await validateUploadSession(sessionToken);
       
       if (isValid) {
-        req.tokenVerification = {
+        (req as any).tokenVerification = {
           sessionToken,
           verificationId: '',
           hasAccess: true
@@ -91,10 +91,10 @@ export async function optionalTokenAccess(
       }
     }
 
-    next();
+    (next as any)();
   } catch (error) {
     console.error('Optional token middleware error:', error);
     // Don't block the request, just continue without token verification
-    next();
+    (next as any)();
   }
 }

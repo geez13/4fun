@@ -37,7 +37,7 @@ router.post('/upload', upload.single('image'), async (req: Request, res: Respons
     
     if (!req.file) {
       console.error('❌ No image file provided');
-      return res.status(400).json({
+      return (res as any).status(400).json({
         success: false,
         error: 'No image file provided',
       });
@@ -320,7 +320,7 @@ router.post('/:imageId/process-vsign', optionalTokenAccess, async (req: Request,
 // Get current user images (for gallery) - without userId parameter
 router.get('/user', async (req: Request, res: Response) => {
   try {
-    const limit = parseInt(req.query.limit as string) || 20;
+    const limit = parseInt((req as any).query.limit as string) || 20;
     
     // For now, use a default userId since we don't have auth implemented
     // In a real app, you would extract userId from the auth token
@@ -335,7 +335,7 @@ router.get('/user', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Get user images error:', error);
-    res.status(500).json({
+    (res as any).status(500).json({
       success: false,
       error: 'Failed to get user images',
     });
@@ -346,11 +346,11 @@ router.get('/user', async (req: Request, res: Response) => {
 router.get('/user/:userId', async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
-    const limit = parseInt(req.query.limit as string) || 20;
+    const limit = parseInt((req as any).query.limit as string) || 20;
     
     // Validate UUID format
     if (!isValidUUID(userId)) {
-      return res.status(400).json({
+      return (res as any).status(400).json({
         success: false,
         error: 'Invalid user ID format',
       });
@@ -358,7 +358,7 @@ router.get('/user/:userId', async (req: Request, res: Response) => {
 
     const images = await supabaseService.getUserImages(userId, limit);
 
-    res.json({
+    (res as any).json({
       success: true,
       images,
       count: images.length,
@@ -401,7 +401,7 @@ router.get('/health/services', async (req: Request, res: Response) => {
 
     const storageInfo = supabaseService.getStorageInfo();
 
-    res.json({
+    (res as any).json({
       success: true,
       services: {
         gemini: {
@@ -438,7 +438,7 @@ router.get('/:imageId', async (req: Request, res: Response) => {
     
     // Validate UUID format
     if (!isValidUUID(imageId)) {
-      return res.status(400).json({
+      return (res as any).status(400).json({
         success: false,
         error: 'Invalid image ID format',
       });

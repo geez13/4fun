@@ -13,10 +13,10 @@ const router = Router()
  */
 router.post('/register', async (req: Request, res: Response): Promise<void> => {
   try {
-    const { email, password, name } = req.body
+    const { email, password, name } = (req as any).body
 
     if (!email || !password || !name) {
-      res.status(400).json({
+      (res as any).status(400).json({
         success: false,
         error: 'Email, password, and name are required',
       })
@@ -24,7 +24,7 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
     }
 
     // Register user with Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signUp({
+    const { data: authData, error: authError } = await (supabase.auth as any).signUp({
       email,
       password,
       options: {
@@ -35,14 +35,14 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
     })
 
     if (authError) {
-      res.status(400).json({
+      (res as any).status(400).json({
         success: false,
         error: authError.message,
       })
       return
     }
 
-    res.status(201).json({
+    (res as any).status(201).json({
       success: true,
       message: 'User registered successfully',
       user: {
@@ -52,8 +52,8 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
       },
     })
   } catch (error) {
-    console.error('Registration error:', error)
-    res.status(500).json({
+    console.error('Registration error:', error);
+    (res as any).status(500).json({
       success: false,
       error: 'Failed to register user',
     })
@@ -66,10 +66,10 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
  */
 router.post('/login', async (req: Request, res: Response): Promise<void> => {
   try {
-    const { email, password } = req.body
+    const { email, password } = (req as any).body
 
     if (!email || !password) {
-      res.status(400).json({
+      (res as any).status(400).json({
         success: false,
         error: 'Email and password are required',
       })
@@ -77,20 +77,20 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
     }
 
     // Sign in with Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+    const { data: authData, error: authError } = await (supabase.auth as any).signInWithPassword({
       email,
       password,
     })
 
     if (authError) {
-      res.status(401).json({
+      (res as any).status(401).json({
         success: false,
         error: authError.message,
       })
       return
     }
 
-    res.json({
+    (res as any).json({
       success: true,
       message: 'Login successful',
       token: authData.session?.access_token,
@@ -101,8 +101,8 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
       },
     })
   } catch (error) {
-    console.error('Login error:', error)
-    res.status(500).json({
+    console.error('Login error:', error);
+    (res as any).status(500).json({
       success: false,
       error: 'Failed to login',
     })
@@ -115,21 +115,21 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
  */
 router.post('/logout', async (req: Request, res: Response): Promise<void> => {
   try {
-    const authHeader = req.headers.authorization
+    const authHeader = (req as any).headers.authorization
     const token = authHeader?.split(' ')[1]
 
     if (token) {
       // Sign out from Supabase
-      await supabase.auth.signOut()
+      await (supabase.auth as any).signOut()
     }
 
-    res.json({
+    (res as any).json({
       success: true,
       message: 'Logout successful',
     })
   } catch (error) {
-    console.error('Logout error:', error)
-    res.status(500).json({
+    console.error('Logout error:', error);
+    (res as any).status(500).json({
       success: false,
       error: 'Failed to logout',
     })
@@ -142,11 +142,11 @@ router.post('/logout', async (req: Request, res: Response): Promise<void> => {
  */
 router.get('/verify', async (req: Request, res: Response): Promise<void> => {
   try {
-    const authHeader = req.headers.authorization
+    const authHeader = (req as any).headers.authorization
     const token = authHeader?.split(' ')[1]
 
     if (!token) {
-      res.status(401).json({
+      (res as any).status(401).json({
         success: false,
         error: 'No token provided',
       })
@@ -154,17 +154,17 @@ router.get('/verify', async (req: Request, res: Response): Promise<void> => {
     }
 
     // Verify token with Supabase
-    const { data: userData, error } = await supabase.auth.getUser(token)
+    const { data: userData, error } = await (supabase.auth as any).getUser(token)
 
     if (error || !userData.user) {
-      res.status(401).json({
+      (res as any).status(401).json({
         success: false,
         error: 'Invalid token',
       })
       return
     }
 
-    res.json({
+    (res as any).json({
       success: true,
       user: {
         id: userData.user.id,
@@ -173,8 +173,8 @@ router.get('/verify', async (req: Request, res: Response): Promise<void> => {
       },
     })
   } catch (error) {
-    console.error('Token verification error:', error)
-    res.status(500).json({
+    console.error('Token verification error:', error);
+    (res as any).status(500).json({
       success: false,
       error: 'Failed to verify token',
     })
