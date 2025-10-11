@@ -357,7 +357,7 @@ class ApiService {
     }
   }
 
-  async processVSign(imageId: string): Promise<ApiResponse<{ processedImageUrl: string }>> {
+  async processFourFinger(imageId: string): Promise<ApiResponse<{ processedImageUrl: string }>> {
     try {
       return await this.fetchWithRetry<{ processedImageUrl: string }>(`${API_BASE_URL}/api/images/${imageId}/process-vsign`, {
         method: 'POST',

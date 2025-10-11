@@ -1,17 +1,23 @@
-import { Connection, PublicKey } from '@solana/web3.js';
-import { getAccount, getAssociatedTokenAddress, getMint, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import nacl from 'tweetnacl';
-import { supabase } from './supabaseService.js';
+import { ethers } from 'ethers';
+import { supabase } from './supabaseService';
 
-// Verification token mint address
-const VERIFICATION_TOKEN_ADDRESS = 'B2Vecaeprrf9m3V7HAaKSFGSwoJiACCL1AKaSjc7pump';
-const MINIMUM_TOKEN_BALANCE = 1; // 1 token minimum requirement
+// "4" token contract address on BNB Chain
+const VERIFICATION_TOKEN_ADDRESS = '0x0a43fc31a73013089df59194872ecae4cae14444'; // "4" token BEP-20 contract address
+const MINIMUM_TOKEN_BALANCE = ethers.parseUnits('1', 18); // 1 token minimum requirement (18 decimals)
+const MINIMUM_TOKEN_BALANCE_NUMBER = 1; // 1 token minimum requirement for API responses
 
-// Solana RPC connection
-const connection = new Connection(
-  process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com',
-  'confirmed'
+// BNB Chain RPC connection
+const provider = new ethers.JsonRpcProvider(
+  process.env.BSC_RPC_URL || 'https://bsc-dataseed1.binance.org/'
 );
+
+// Standard BEP-20 token ABI (minimal for balance checking)
+const ERC20_ABI = [
+  'function balanceOf(address owner) view returns (uint256)',
+  'function decimals() view returns (uint8)',
+  'function symbol() view returns (string)',
+  'function name() view returns (string)'
+];
 
 export interface TokenVerificationRequest {
   walletAddress: string;
@@ -45,17 +51,11 @@ export function verifyWalletSignature(
   message: string
 ): boolean {
   try {
-    const publicKey = new PublicKey(walletAddress);
-    const messageBytes = new TextEncoder().encode(message);
-    const signatureBytes = Buffer.from(signature, 'base64');
-    
-    return nacl.sign.detached.verify(
-      messageBytes,
-      signatureBytes,
-      publicKey.toBytes()
-    );
+    // Verify the signature using ethers
+    const recoveredAddress = ethers.verifyMessage(message, signature);
+    return recoveredAddress.toLowerCase() === walletAddress.toLowerCase();
   } catch (error) {
-    console.error('Signature verification failed:', error);
+    console.error('Signature verification error:', error);
     return false;
   }
 }
@@ -66,38 +66,33 @@ export function verifyWalletSignature(
 export async function getTokenBalance(walletAddress: string): Promise<number> {
   try {
     console.log(`Getting token balance for wallet: ${walletAddress}`);
-    const walletPublicKey = new PublicKey(walletAddress);
-    const tokenMintPublicKey = new PublicKey(VERIFICATION_TOKEN_ADDRESS);
     
-    // Get the associated token account address
-    const associatedTokenAddress = await getAssociatedTokenAddress(
-      tokenMintPublicKey,
-      walletPublicKey
-    );
+    // Validate wallet address format
+    if (!ethers.isAddress(walletAddress)) {
+      throw new Error('Invalid wallet address format');
+    }
     
-    console.log(`Associated token address: ${associatedTokenAddress.toString()}`);
+    // Create contract instance
+    const tokenContract = new ethers.Contract(VERIFICATION_TOKEN_ADDRESS, ERC20_ABI, provider);
     
     try {
-      // Get the token account info
-      const tokenAccount = await getAccount(connection, associatedTokenAddress);
-      console.log(`Raw token amount: ${tokenAccount.amount.toString()}`);
+      // Get the token balance
+      const balance = await tokenContract.balanceOf(walletAddress);
+      console.log(`Raw token balance: ${balance.toString()}`);
       
-      // Get mint info to get decimals
-      const mintInfo = await getMint(connection, tokenMintPublicKey);
-      console.log(`Token decimals: ${mintInfo.decimals}`);
+      // Get token decimals
+      const decimals = await tokenContract.decimals();
+      console.log(`Token decimals: ${decimals}`);
       
-      // Calculate actual balance by dividing by 10^decimals
-      const actualBalance = Number(tokenAccount.amount) / Math.pow(10, mintInfo.decimals);
+      // Convert to human readable format
+      const actualBalance = Number(ethers.formatUnits(balance, decimals));
       console.log(`Calculated token balance: ${actualBalance}`);
       
       return actualBalance;
-    } catch (accountError) {
-      console.log(`Token account error: ${accountError.name} - ${accountError.message}`);
-      // Token account doesn't exist, return 0 balance
-      if (accountError.name === 'TokenAccountNotFoundError') {
-        return 0;
-      }
-      throw accountError;
+    } catch (contractError) {
+      console.log(`Contract error: ${contractError.message}`);
+      // If contract call fails, return 0 balance
+      return 0;
     }
   } catch (error) {
     console.error('Failed to get token balance:', error);
@@ -109,7 +104,7 @@ export async function getTokenBalance(walletAddress: string): Promise<number> {
  * Check if wallet has minimum required verification tokens
  */
 export function hasRequiredTokens(balance: number): boolean {
-  return balance >= MINIMUM_TOKEN_BALANCE;
+  return balance >= Number(ethers.formatUnits(MINIMUM_TOKEN_BALANCE, 18));
 }
 
 /**
@@ -338,7 +333,7 @@ export async function verifyTokenAccess(
       return {
         hasAccess: false,
         tokenBalance: 0,
-        requiredBalance: MINIMUM_TOKEN_BALANCE,
+        requiredBalance: MINIMUM_TOKEN_BALANCE_NUMBER,
         error: 'Missing required parameters'
       };
     }
@@ -350,7 +345,7 @@ export async function verifyTokenAccess(
       return {
         hasAccess: false,
         tokenBalance: 0,
-        requiredBalance: MINIMUM_TOKEN_BALANCE,
+        requiredBalance: MINIMUM_TOKEN_BALANCE_NUMBER,
         error: 'Invalid wallet signature'
       };
     }
@@ -405,7 +400,7 @@ export async function verifyTokenAccess(
     return {
       hasAccess,
       tokenBalance,
-      requiredBalance: MINIMUM_TOKEN_BALANCE,
+      requiredBalance: MINIMUM_TOKEN_BALANCE_NUMBER,
       verificationId,
       sessionToken
     };
@@ -415,7 +410,7 @@ export async function verifyTokenAccess(
     return {
       hasAccess: false,
       tokenBalance: 0,
-      requiredBalance: MINIMUM_TOKEN_BALANCE,
+      requiredBalance: MINIMUM_TOKEN_BALANCE_NUMBER,
       error: error instanceof Error ? error.message : 'Verification failed'
     };
   }

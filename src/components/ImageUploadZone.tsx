@@ -93,7 +93,7 @@ export const ImageUploadZone: React.FC<ImageUploadZoneProps> = ({
           relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200
           ${isDragActive 
             ? 'border-purple-400 bg-purple-500/10' 
-            : 'border-gray-600 hover:border-gray-500 bg-gray-800/30'
+            : 'border-gray-600 hover:border-gray-500 bg-black'
           }
           ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}
         `}
@@ -103,7 +103,7 @@ export const ImageUploadZone: React.FC<ImageUploadZoneProps> = ({
         <div className="flex flex-col items-center space-y-4">
           <div className={`
             w-16 h-16 rounded-full flex items-center justify-center transition-colors
-            ${isDragActive ? 'bg-purple-500/20' : 'bg-gray-700/50'}
+            ${isDragActive ? 'bg-purple-500/20' : 'bg-black'}
           `}>
             <Upload className={`w-8 h-8 ${isDragActive ? 'text-purple-400' : 'text-gray-400'}`} />
           </div>
@@ -141,7 +141,7 @@ export const ImageUploadZone: React.FC<ImageUploadZoneProps> = ({
             {uploadedFiles.map((uploadedFile) => (
               <div
                 key={uploadedFile.id}
-                className="flex items-center gap-3 p-3 bg-gray-800/50 rounded-lg border border-gray-700/50"
+                className="flex items-center gap-3 p-3 bg-black rounded-lg border border-gray-700/50"
               >
                 <div className="flex-shrink-0">
                   <img

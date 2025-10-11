@@ -38,3 +38,4 @@ test-*.svg
 test_*.png
 test_*.sql
 debug_*.js
+.vercel

@@ -5,7 +5,8 @@ import { WalletConnector } from '@/components/WalletConnector';
 import { MasonryGrid } from '@/components/MasonryGrid';
 import { useInfiniteImages, GalleryImage } from '@/hooks/useInfiniteImages';
 import { ImageModal } from '@/components/ImageModal';
-import vsignLogoUrl from '@/assets/vsignlogo.svg';
+
+const logoUrl = '/4logo.svg';
 
 // Custom hook for VWall images that uses the VWall API endpoint
 const useVWallImages = () => {
@@ -110,7 +111,7 @@ export const VWall: React.FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+    <div className="min-h-screen bg-black">
       {/* Header */}
       <div className="sticky top-0 z-50 bg-black/20 backdrop-blur-md border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -125,8 +126,8 @@ export const VWall: React.FC = () => {
             
             <div className="flex items-center space-x-3">
               <img 
-                src={vsignLogoUrl} 
-                alt="V-Sign" 
+                src={logoUrl} 
+                alt="四.fun" 
                 className="w-8 h-8"
               />
               <h1 className="text-xl font-bold text-white">V Wall Gallery</h1>

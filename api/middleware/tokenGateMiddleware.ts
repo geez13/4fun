@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { validateUploadSession } from '../services/tokenVerificationService.js';
+import { validateUploadSession } from '../services/tokenVerificationService';
 
 // Extend Request interface to include token verification data
 declare global {

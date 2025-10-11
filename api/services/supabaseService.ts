@@ -1,13 +1,15 @@
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 import { v4 as uuidv4 } from 'uuid';
+import { SupabaseConnectionManager, ConnectionConfig, ConnectionMetrics } from '../lib/supabaseConnectionManager';
+import { securityLogger, createLogContext, measurePerformance } from '../lib/logger';
 
 dotenv.config();
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL || '';
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
-// Check if Supabase credentials are properly configured
+// Enhanced configuration validation
 const isSupabaseConfigured = () => {
   const hasValidUrl = supabaseUrl && 
     supabaseUrl !== 'https://your-project-ref.supabase.co' && 
@@ -23,17 +25,61 @@ const isSupabaseConfigured = () => {
 
 const SUPABASE_CONFIGURED = isSupabaseConfigured();
 
-if (!SUPABASE_CONFIGURED) {
-  console.warn('⚠️  SUPABASE NOT CONFIGURED');
-  console.warn('📝 Using fallback mode with in-memory storage');
-  console.warn('🔧 To enable persistent storage, follow these steps:');
-  console.warn('   1. Create a Supabase project at https://supabase.com');
-  console.warn('   2. Update your .env file with real Supabase credentials');
-  console.warn('   3. Run the database migration from supabase/migrations/001_initial_schema.sql');
-  console.warn('   4. Restart the server');
-  console.warn('📖 See SUPABASE_SETUP.md for detailed instructions');
+// Use enhanced security logger
+
+// Connection manager instance
+let connectionManager: SupabaseConnectionManager | null = null;
+
+// Initialize connection manager if Supabase is configured
+if (SUPABASE_CONFIGURED) {
+  const connectionConfig: ConnectionConfig = {
+    url: supabaseUrl,
+    serviceKey: supabaseServiceKey,
+    maxRetries: 3,
+    retryDelay: 1000,
+    connectionTimeout: 10000,
+    poolSize: 5,
+    healthCheckInterval: 30000,
+    enableLogging: process.env.NODE_ENV === 'development',
+    rateLimitRequests: 100,
+    rateLimitWindow: 60000,
+  };
+
+  connectionManager = new SupabaseConnectionManager(connectionConfig);
+  
+  // Initialize connection manager
+  connectionManager.initialize().catch(error => {
+    securityLogger.error('Failed to initialize connection manager', error);
+  });
+
+  // Setup event listeners
+  connectionManager.on('healthCheckFailed', (error) => {
+    securityLogger.warn('Health check failed', createLogContext(undefined, 'healthCheck', { error: error.message }));
+  });
+
+  connectionManager.on('error', (error) => {
+    securityLogger.error('Connection manager error', error);
+  });
+
+  securityLogger.info('Supabase connection manager initialized successfully', createLogContext(undefined, 'initialization', {
+    poolSize: connectionConfig.poolSize,
+    healthCheckInterval: connectionConfig.healthCheckInterval
+  }));
+} else {
+  securityLogger.warn('⚠️  SUPABASE NOT CONFIGURED', createLogContext(undefined, 'configuration', {
+    mode: 'fallback',
+    reason: 'missing_credentials'
+  }));
+  securityLogger.warn('📝 Using fallback mode with in-memory storage');
+  securityLogger.warn('🔧 To enable persistent storage, follow these steps:');
+  securityLogger.warn('   1. Create a Supabase project at https://supabase.com');
+  securityLogger.warn('   2. Update your .env file with real Supabase credentials');
+  securityLogger.warn('   3. Run the database migration from supabase/migrations/001_initial_schema.sql');
+  securityLogger.warn('   4. Restart the server');
+  securityLogger.warn('📖 See SUPABASE_SETUP.md for detailed instructions');
 }
 
+// Fallback client for backward compatibility
 export const supabase = SUPABASE_CONFIGURED ? createClient(supabaseUrl, supabaseServiceKey) : null;
 
 // In-memory storage for fallback mode
@@ -72,8 +118,60 @@ export interface ProcessingJobRecord {
 // Default demo user UUID - consistent across app restarts
 const DEMO_USER_UUID = '00000000-0000-0000-0000-000000000001';
 
+// Input validation utilities
+const validateInput = {
+  uuid: (id: string): boolean => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(id);
+  },
+  
+  fileName: (fileName: string): boolean => {
+    // Allow alphanumeric, dots, hyphens, underscores
+    const fileNameRegex = /^[a-zA-Z0-9._-]+$/;
+    return fileNameRegex.test(fileName) && fileName.length <= 255;
+  },
+  
+  mimeType: (mimeType: string): boolean => {
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    return allowedTypes.includes(mimeType);
+  },
+  
+  url: (url: string): boolean => {
+    try {
+      // Allow data URLs for base64 encoded images
+      if (url.startsWith('data:image/')) {
+        return true;
+      }
+      // Allow regular HTTP/HTTPS URLs
+      new URL(url);
+      return url.startsWith('https://') || url.startsWith('http://localhost');
+    } catch {
+      return false;
+    }
+  }
+};
+
 export class SupabaseService {
+  /**
+   * Enhanced method to create image record with validation and retry logic
+   */
   async createImageRecord(imageData: Partial<ImageRecord>): Promise<ImageRecord | null> {
+    // Input validation
+    if (imageData.file_name && !validateInput.fileName(imageData.file_name)) {
+      securityLogger.warn('Invalid file name provided', createLogContext(undefined, 'createImageRecord', { fileName: imageData.file_name }));
+      throw new Error('Invalid file name format');
+    }
+
+    if (imageData.mime_type && !validateInput.mimeType(imageData.mime_type)) {
+      securityLogger.warn('Invalid MIME type provided', createLogContext(undefined, 'createImageRecord', { mimeType: imageData.mime_type }));
+      throw new Error('Invalid MIME type');
+    }
+
+    if (imageData.original_url && !validateInput.url(imageData.original_url)) {
+      securityLogger.warn('Invalid URL provided', createLogContext(undefined, "operation", { url: imageData.original_url }));
+      throw new Error('Invalid URL format');
+    }
+
     if (!SUPABASE_CONFIGURED) {
       // Fallback mode: store in memory
       const record: ImageRecord = {
@@ -92,51 +190,73 @@ export class SupabaseService {
       };
       
       inMemoryStorage.images.set(record.id, record);
-      console.log(`📝 Stored image record in memory: ${record.file_name} (ID: ${record.id})`);
+      securityLogger.info(`Stored image record in memory: ${record.file_name} (ID: ${record.id})`);
       return record;
     }
 
+    if (!connectionManager) {
+      throw new Error('Connection manager not available');
+    }
+
     try {
-      console.log('🔄 Inserting image record into Supabase...');
-      const { data, error } = await supabase!
-        .from('images')
-        .insert([imageData])
-        .select()
-        .single();
+      const result = await connectionManager.executeWithRetry(async (client) => {
+        securityLogger.debug('Inserting image record into Supabase...');
+        
+        const { data, error } = await client
+          .from('images')
+          .insert([imageData])
+          .select()
+          .single();
 
-      if (error) {
-        console.error('❌ Supabase insert error:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code,
-          error: error
-        });
-        return null;
-      }
+        if (error) {
+          securityLogger.error('Supabase insert error', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code,
+          });
+          throw new Error(`Database insert failed: ${error.message}`);
+        }
 
-      console.log('✅ Image record inserted successfully:', {
-        id: data.id,
-        fileName: data.file_name,
-        status: data.status
-      });
-      return data;
+        securityLogger.info('Image record inserted successfully', createLogContext(data.user_id, 'createImageRecord', {
+          id: data.id,
+          fileName: data.file_name,
+          status: data.status
+        }));
+        
+        return data;
+      }, `create-image-${imageData.user_id}`);
+
+      return result;
     } catch (error) {
-      console.error('❌ Supabase service error:', {
-        message: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined,
-        error: error
-      });
-      return null;
+      securityLogger.error('Failed to create image record', error);
+      throw error;
     }
   }
 
+  /**
+   * Enhanced method to update image record with validation
+   */
   async updateImageRecord(id: string, updates: Partial<ImageRecord>): Promise<ImageRecord | null> {
+    // Input validation
+    if (!validateInput.uuid(id)) {
+      securityLogger.warn('Invalid UUID provided for update', createLogContext(undefined, "operation", { id }));
+      throw new Error('Invalid record ID format');
+    }
+
+    if (updates.file_name && !validateInput.fileName(updates.file_name)) {
+      throw new Error('Invalid file name format');
+    }
+
+    if (updates.mime_type && !validateInput.mimeType(updates.mime_type)) {
+      throw new Error('Invalid MIME type');
+    }
+
     if (!SUPABASE_CONFIGURED) {
       // Fallback mode: update in memory
       const existing = inMemoryStorage.images.get(id);
       if (!existing) {
-        console.log(`❌ Image record not found in memory: ${id}`);
+        securityLogger.warn(`Image record not found in memory: ${id}`);
         return null;
       }
       
@@ -147,98 +267,163 @@ export class SupabaseService {
       };
       
       inMemoryStorage.images.set(id, updated);
-      console.log(`📝 Updated image record in memory: ${id}`);
+      securityLogger.info(`Updated image record in memory: ${id}`);
       return updated;
     }
 
+    if (!connectionManager) {
+      throw new Error('Connection manager not available');
+    }
+
     try {
-      const { data, error } = await supabase!
-        .from('images')
-        .update({ ...updates, updated_at: new Date().toISOString() })
-        .eq('id', id)
-        .select()
-        .single();
+      const result = await connectionManager.executeWithRetry(async (client) => {
+        const { data, error } = await client
+          .from('images')
+          .update({ ...updates, updated_at: new Date().toISOString() })
+          .eq('id', id)
+          .select()
+          .single();
 
-      if (error) {
-        console.error('Error updating image record:', error);
-        return null;
-      }
+        if (error) {
+          securityLogger.error('Error updating image record', error);
+          throw new Error(`Database update failed: ${error.message}`);
+        }
 
-      return data;
+        return data;
+      }, `update-image-${id}`);
+
+      securityLogger.info(`Image record updated successfully: ${id}`);
+      return result;
     } catch (error) {
-      console.error('Supabase error:', error);
-      return null;
+      securityLogger.error('Failed to update image record', error);
+      throw error;
     }
   }
 
+  /**
+   * Enhanced method to get image record with validation
+   */
   async getImageRecord(id: string): Promise<ImageRecord | null> {
+    if (!validateInput.uuid(id)) {
+      securityLogger.warn('Invalid UUID provided for get', createLogContext(undefined, "getImageRecord", { id }));
+      throw new Error('Invalid record ID format');
+    }
+
     if (!SUPABASE_CONFIGURED) {
       // Fallback mode: get from memory
       const record = inMemoryStorage.images.get(id);
       if (record) {
-        console.log(`📖 Retrieved image record from memory: ${id}`);
+        securityLogger.debug(`Retrieved image record from memory: ${id}`);
       } else {
-        console.log(`❌ Image record not found in memory: ${id}`);
+        securityLogger.debug(`Image record not found in memory: ${id}`);
       }
       return record || null;
     }
 
+    if (!connectionManager) {
+      throw new Error('Connection manager not available');
+    }
+
     try {
-      const { data, error } = await supabase!
-        .from('images')
-        .select('*')
-        .eq('id', id)
-        .single();
+      const result = await connectionManager.executeWithRetry(async (client) => {
+        const { data, error } = await client
+          .from('images')
+          .select('*')
+          .eq('id', id)
+          .single();
 
-      if (error) {
-        console.error('Error fetching image record:', error);
-        return null;
-      }
+        if (error) {
+          if (error.code === 'PGRST116') {
+            // Record not found
+            return null;
+          }
+          securityLogger.error('Error fetching image record', error);
+          throw new Error(`Database fetch failed: ${error.message}`);
+        }
 
-      return data;
+        return data;
+      }, `get-image-${id}`);
+
+      return result;
     } catch (error) {
-      console.error('Supabase error:', error);
-      return null;
+      securityLogger.error('Failed to get image record', error);
+      throw error;
     }
   }
 
+  /**
+   * Enhanced method to get user images with validation and pagination
+   */
   async getUserImages(userId: string, limit: number = 20): Promise<ImageRecord[]> {
+    // Input validation
+    if (!validateInput.uuid(userId)) {
+      securityLogger.warn('Invalid user ID provided for getUserImages', createLogContext(undefined, "getUserImages", { userId }));
+      throw new Error('Invalid user ID format');
+    }
+
+    if (limit < 1 || limit > 100) {
+      securityLogger.warn('Invalid limit provided for getUserImages', createLogContext(undefined, "getUserImages", { limit }));
+      throw new Error('Limit must be between 1 and 100');
+    }
+
     if (!SUPABASE_CONFIGURED) {
       // Fallback mode: get from memory
-      const allImages = Array.from(inMemoryStorage.images.values());
-      const userImages = allImages
+      const userImages = Array.from(inMemoryStorage.images.values())
         .filter(img => img.user_id === userId)
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
         .slice(0, limit);
       
-      console.log(`📖 Retrieved ${userImages.length} images from memory for user: ${userId}`);
+      securityLogger.debug(`Retrieved ${userImages.length} images from memory for user: ${userId}`);
       return userImages;
     }
 
+    if (!connectionManager) {
+      throw new Error('Connection manager not available');
+    }
+
     try {
-      const { data, error } = await supabase!
-        .from('images')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(limit);
+      const result = await connectionManager.executeWithRetry(async (client) => {
+        const { data, error } = await client
+          .from('images')
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(limit);
 
-      if (error) {
-        console.error('Error fetching user images:', error);
-        return [];
-      }
+        if (error) {
+          securityLogger.error('Error fetching user images', error);
+          throw new Error(`Database fetch failed: ${error.message}`);
+        }
 
-      return data || [];
+        return data || [];
+      }, `get-user-images-${userId}`);
+
+      securityLogger.debug(`Retrieved ${result.length} images for user: ${userId}`);
+      return result;
     } catch (error) {
-      console.error('Supabase error:', error);
-      return [];
+      securityLogger.error('Failed to get user images', error);
+      throw error;
     }
   }
 
+  /**
+   * Enhanced method to create processing job with validation
+   */
   async createProcessingJob(jobData: Partial<ProcessingJobRecord>): Promise<ProcessingJobRecord | null> {
+    // Input validation
+    if (jobData.image_id && !validateInput.uuid(jobData.image_id)) {
+      securityLogger.warn('Invalid image ID provided for processing job', createLogContext(undefined, "createProcessingJob", { imageId: jobData.image_id }));
+      throw new Error('Invalid image ID format');
+    }
+
+    if (jobData.prompt_used && jobData.prompt_used.length > 1000) {
+      securityLogger.warn('Prompt too long for processing job', createLogContext(undefined, "createProcessingJob", { promptLength: jobData.prompt_used.length }));
+      throw new Error('Prompt must be less than 1000 characters');
+    }
+
     if (!SUPABASE_CONFIGURED) {
       // Fallback mode: store in memory
-      const job: ProcessingJobRecord = {
+      const record: ProcessingJobRecord = {
         id: uuidv4(),
         image_id: jobData.image_id || '',
         prompt_used: jobData.prompt_used || '',
@@ -250,36 +435,59 @@ export class SupabaseService {
         completed_at: jobData.completed_at,
       };
       
-      inMemoryStorage.processingJobs.set(job.id, job);
-      console.log(`📝 Stored processing job in memory: ${job.id}`);
-      return job;
+      inMemoryStorage.processingJobs.set(record.id, record);
+      securityLogger.info(`Stored processing job in memory: ${record.id}`);
+      return record;
+    }
+
+    if (!connectionManager) {
+      throw new Error('Connection manager not available');
     }
 
     try {
-      const { data, error } = await supabase!
-        .from('processing_jobs')
-        .insert([jobData])
-        .select()
-        .single();
+      const result = await connectionManager.executeWithRetry(async (client) => {
+        const { data, error } = await client
+          .from('processing_jobs')
+          .insert([jobData])
+          .select()
+          .single();
 
-      if (error) {
-        console.error('Error creating processing job:', error);
-        return null;
-      }
+        if (error) {
+          securityLogger.error('Error creating processing job', error);
+          throw new Error(`Database insert failed: ${error.message}`);
+        }
 
-      return data;
+        return data;
+      }, `create-job-${jobData.image_id}`);
+
+      securityLogger.info(`Processing job created successfully: ${result.id}`);
+      return result;
     } catch (error) {
-      console.error('Supabase error:', error);
-      return null;
+      securityLogger.error('Failed to create processing job', error);
+      throw error;
     }
   }
 
+  /**
+   * Enhanced method to update processing job with validation
+   */
   async updateProcessingJob(id: string, updates: Partial<ProcessingJobRecord>): Promise<ProcessingJobRecord | null> {
+    // Input validation
+    if (!validateInput.uuid(id)) {
+      securityLogger.warn('Invalid processing job ID provided for update', createLogContext(undefined, "updateProcessingJob", { id }));
+      throw new Error('Invalid processing job ID format');
+    }
+
+    if (updates.prompt_used && updates.prompt_used.length > 1000) {
+      securityLogger.warn('Prompt too long for processing job update', createLogContext(undefined, "updateProcessingJob", { promptLength: updates.prompt_used.length }));
+      throw new Error('Prompt must be less than 1000 characters');
+    }
+
     if (!SUPABASE_CONFIGURED) {
       // Fallback mode: update in memory
       const existing = inMemoryStorage.processingJobs.get(id);
       if (!existing) {
-        console.log(`❌ Processing job not found in memory: ${id}`);
+        securityLogger.warn(`Processing job not found in memory: ${id}`);
         return null;
       }
       
@@ -288,48 +496,99 @@ export class SupabaseService {
         ...updates,
       };
       
+      // Set completed_at if status is completed
+      if (updates.status === 'completed' && !updated.completed_at) {
+        updated.completed_at = new Date().toISOString();
+      }
+      
       inMemoryStorage.processingJobs.set(id, updated);
-      console.log(`📝 Updated processing job in memory: ${id}`);
+      securityLogger.info(`Updated processing job in memory: ${id}`);
       return updated;
     }
 
+    if (!connectionManager) {
+      throw new Error('Connection manager not available');
+    }
+
     try {
-      const { data, error } = await supabase!
-        .from('processing_jobs')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
+      const result = await connectionManager.executeWithRetry(async (client) => {
+        // Set completed_at if status is completed
+        const updateData = { ...updates };
+        if (updates.status === 'completed' && !updateData.completed_at) {
+          updateData.completed_at = new Date().toISOString();
+        }
 
-      if (error) {
-        console.error('Error updating processing job:', error);
-        return null;
-      }
+        const { data, error } = await client
+          .from('processing_jobs')
+          .update(updateData)
+          .eq('id', id)
+          .select()
+          .single();
 
-      return data;
+        if (error) {
+          securityLogger.error('Error updating processing job', error);
+          throw new Error(`Database update failed: ${error.message}`);
+        }
+
+        return data;
+      }, `update-job-${id}`);
+
+      securityLogger.info(`Processing job updated successfully: ${id}`);
+      return result;
     } catch (error) {
-      console.error('Supabase error:', error);
-      return null;
+      securityLogger.error('Failed to update processing job', error);
+      throw error;
     }
   }
 
   async testConnection(): Promise<boolean> {
     if (!SUPABASE_CONFIGURED) {
-      console.log('📝 Fallback mode active - connection test skipped');
+      securityLogger.info('Fallback mode active - connection test skipped');
       return true; // Return true for fallback mode
     }
 
-    try {
-      const { data, error } = await supabase!
-        .from('images')
-        .select('count')
-        .limit(1);
-
-      return !error;
-    } catch (error) {
-      console.error('Supabase connection test failed:', error);
+    if (!connectionManager) {
+      securityLogger.error('Connection manager not available');
       return false;
     }
+
+    try {
+      return await connectionManager.performHealthCheck();
+    } catch (error) {
+      securityLogger.error('Connection test failed', error);
+      return false;
+    }
+  }
+
+  /**
+   * Get connection metrics and health information
+   */
+  getConnectionMetrics(): ConnectionMetrics | null {
+    if (!connectionManager) {
+      return null;
+    }
+    return connectionManager.getMetrics();
+  }
+
+  /**
+   * Check if the service is healthy
+   */
+  isHealthy(): boolean {
+    if (!SUPABASE_CONFIGURED) {
+      return true; // Fallback mode is always "healthy"
+    }
+    return connectionManager?.isHealthy() || false;
+  }
+
+  /**
+   * Get service configuration (sanitized)
+   */
+  getServiceConfig(): any {
+    return {
+      configured: SUPABASE_CONFIGURED,
+      connectionManager: connectionManager?.getConfig() || null,
+      fallbackMode: !SUPABASE_CONFIGURED,
+    };
   }
 
   // Helper method to check if Supabase is configured
@@ -349,9 +608,19 @@ export class SupabaseService {
     
     return {
       mode: 'supabase',
-      imageCount: -1, // Would need to query database
-      jobCount: -1,   // Would need to query database
+      imageCount: -1, // Would require a count query
+      jobCount: -1,   // Would require a count query
     };
+  }
+
+  /**
+   * Cleanup method for graceful shutdown
+   */
+  async cleanup(): Promise<void> {
+    if (connectionManager) {
+      await connectionManager.cleanup();
+    }
+    securityLogger.info('SupabaseService cleanup completed');
   }
 }
 

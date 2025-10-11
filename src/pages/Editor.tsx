@@ -111,17 +111,17 @@ export default function Editor() {
       setCurrentImage(prev => prev ? { ...prev, imageId } : null)
       setProcessingProgress(30)
 
-      // Step 2: Process the uploaded image with V-sign magic
-      console.log('🎨 Processing image with V-sign magic...')
+      // Step 2: Process the uploaded image with four-finger magic
+      console.log('🎨 Processing image with four-finger magic...')
       
-      const processResponse = await apiService.processVSign(imageId)
+      const processResponse = await apiService.processFourFinger(imageId)
       
       if (!processResponse.success) {
         throw new Error(processResponse.error || 'Failed to process image')
       }
 
       setProcessingProgress(60)
-      console.log('✅ V-sign processing initiated successfully')
+      console.log('✅ Four-finger processing initiated successfully')
 
       // Step 3: Use the processed image URL directly from the response
       if (processResponse.data?.processedImageUrl) {
@@ -151,7 +151,7 @@ export default function Editor() {
     if (currentImage?.processedUrl) {
       const link = document.createElement('a')
       link.href = currentImage.processedUrl
-      link.download = `vsign-enhanced-${currentImage.file.name}`
+      link.download = `4finger-enhanced-${currentImage.file.name}`
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
@@ -175,7 +175,7 @@ export default function Editor() {
     setIsSharing(true)
     try {
       const tweetText = encodeURIComponent(
-        "Just enhanced my photo with ✌️-Sign Magic! 🚀✨ Check out this amazing AI-powered transformation. #VSignMagic #AI #PhotoEnhancement #Solana"
+        "Just enhanced my photo with 4-Finger Magic! 🚀✨ Check out this amazing AI-powered transformation. #4FingerMagic #AI #PhotoEnhancement #BNBChain"
       )
       const tweetUrl = `https://twitter.com/intent/tweet?text=${tweetText}`
       window.open(tweetUrl, '_blank', 'width=550,height=420')
@@ -189,7 +189,7 @@ export default function Editor() {
   return (
     <ErrorBoundary>
       <Layout>
-        <div className="min-h-screen bg-dark-900 py-12">
+        <div className="min-h-screen bg-black py-12">
           {/* Header with Tabs */}
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-center items-center mb-8">
@@ -197,7 +197,7 @@ export default function Editor() {
               <button
                 className="px-6 py-3 rounded-lg font-medium transition-all duration-200 bg-solana-gradient text-white"
               >
-                V-Sign Magic
+                4-Finger Magic
               </button>
             </div>
           </div>
@@ -210,7 +210,7 @@ export default function Editor() {
               onAccessDenied={handleTokenAccessDenied}
             >
               <div className="text-center text-gray-400">
-                Connect your wallet and verify token ownership to access V-Sign Magic features.
+                Connect your wallet and verify token ownership to access 4-Finger Magic features.
               </div>
             </TokenGateChecker>
           </div>
@@ -221,7 +221,7 @@ export default function Editor() {
               <div className="grid lg:grid-cols-2 gap-8">
                 {/* Original Image Panel */}
                 <div className="space-y-6">
-                  <div className="bg-dark-800/50 border border-dark-600 rounded-2xl p-6">
+                  <div className="bg-black border border-dark-600 rounded-2xl p-6">
                     <h3 className="text-xl font-semibold text-white mb-4">Original Image</h3>
                     
                     {!currentImage ? (
@@ -269,8 +269,8 @@ export default function Editor() {
                           disabled={currentImage.status === 'processing'}
                           className={`w-full py-3 px-6 rounded-lg font-medium transition-all duration-200 ${
                             currentImage.status === 'processing'
-                              ? 'bg-gray-600 cursor-not-allowed'
-                              : 'bg-solana-gradient hover:opacity-90 text-white'
+                              ? 'bg-black cursor-not-allowed'
+              : 'bg-binance-gradient hover:opacity-90 text-white'
                           }`}
                         >
                           {currentImage.status === 'processing' ? (
@@ -279,7 +279,7 @@ export default function Editor() {
                               <span>Processing...</span>
                             </div>
                           ) : (
-                            'Add ✌️-Sign Magic'
+                            'Add 4-Finger Magic'
                           )}
                         </button>
                       </div>
@@ -289,20 +289,20 @@ export default function Editor() {
 
                 {/* Processed Image Panel */}
                 <div className="space-y-6">
-                  <div className="bg-dark-800/50 border border-dark-600 rounded-2xl p-6">
+                  <div className="bg-black border border-dark-600 rounded-2xl p-6">
                     <h3 className="text-xl font-semibold text-white mb-4">Enhanced Image</h3>
                     
                     {currentImage?.status === 'processing' ? (
                       <div className="text-center py-12">
                         <div className="relative w-24 h-24 mx-auto mb-6">
-                          <div className="absolute inset-0 border-4 border-solana-primary/20 rounded-full"></div>
-                          <div className="absolute inset-0 border-4 border-transparent border-t-solana-primary rounded-full animate-spin"></div>
-                          <div className="absolute inset-2 bg-dark-800 rounded-full flex items-center justify-center">
-                            <div className="w-8 h-8 bg-solana-gradient rounded-full animate-pulse"></div>
+                          <div className="absolute inset-0 border-4 border-binance-primary/20 rounded-full"></div>
+                          <div className="absolute inset-0 border-4 border-transparent border-t-binance-primary rounded-full animate-spin"></div>
+                          <div className="absolute inset-2 bg-black rounded-full flex items-center justify-center">
+                            <div className="w-8 h-8 bg-binance-gradient rounded-full animate-pulse"></div>
                           </div>
                         </div>
                         <p className="text-lg font-medium text-gray-300 mb-2">
-                          Adding ✌️-Sign Magic...
+                          Adding 4-Finger Magic...
                         </p>
                         <p className="text-sm text-gray-500">
                           {Math.round(processingProgress)}% complete
@@ -313,13 +313,13 @@ export default function Editor() {
                         <div className="relative">
                           <img
                             src={currentImage.processedUrl}
-                            alt="✌️-Sign Enhanced"
+                            alt="4-Finger Enhanced"
                             className="w-full h-auto rounded-lg shadow-md"
                           />
                         </div>
                         <button
                           onClick={handleDownload}
-                          className="bg-solana-gradient text-white px-6 py-3 rounded-lg hover:opacity-90 transition-all duration-200 inline-flex items-center space-x-2"
+                          className="bg-binance-gradient text-white px-6 py-3 rounded-lg hover:opacity-90 transition-all duration-200 inline-flex items-center space-x-2"
                         >
                           <Download className="w-5 h-5" />
                           <span>Download Enhanced Image</span>
@@ -327,7 +327,7 @@ export default function Editor() {
                       </div>
                     ) : currentImage?.status === 'failed' ? (
                       <div className="text-center text-red-500">
-                        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <div className="w-16 h-16 bg-black rounded-full flex items-center justify-center mx-auto mb-4">
                           <span className="text-2xl">⚠️</span>
                         </div>
                         <p className="font-medium">Processing Failed</p>
@@ -342,7 +342,7 @@ export default function Editor() {
                           />
                           <button
                             onClick={handleReset}
-                            className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+                            className="px-4 py-2 bg-binance-gradient text-white rounded-lg hover:opacity-90 transition-opacity"
                           >
                             Upload New Image
                           </button>
@@ -351,7 +351,7 @@ export default function Editor() {
                     ) : (
                       <div className="text-center text-gray-500">
                         <ImageIcon className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                        <p>Click "Add ✌️-Sign Magic" to process your image</p>
+                        <p>Click "Add 4-Finger Magic" to process your image</p>
                       </div>
                     )}
                   </div>
@@ -359,22 +359,22 @@ export default function Editor() {
               </div>
 
               {/* Instructions */}
-              <div className="mt-12 bg-dark-800/50 border border-dark-600 rounded-2xl p-8">
+              <div className="mt-12 bg-black border border-dark-600 rounded-2xl p-8">
                 <h3 className="text-xl font-semibold text-white mb-4">How it works</h3>
                 <div className="grid md:grid-cols-4 gap-6">
                   <div className="flex items-start space-x-3">
-                    <div className="w-8 h-8 bg-solana-gradient text-white rounded-full flex items-center justify-center font-bold text-sm">
+                    <div className="w-8 h-8 bg-binance-gradient text-white rounded-full flex items-center justify-center font-bold text-sm">
                       1
                     </div>
                     <div>
                       <h4 className="font-medium text-white">Connect Wallet</h4>
                       <p className="text-sm text-gray-300">
-                        Connect your Solana wallet and verify you have ≥1 SOL
+                        Connect your BNB Chain wallet and verify you have ≥1 "4" token
                       </p>
                     </div>
                   </div>
                   <div className="flex items-start space-x-3">
-                    <div className="w-8 h-8 bg-solana-gradient text-white rounded-full flex items-center justify-center font-bold text-sm">
+                    <div className="w-8 h-8 bg-binance-gradient text-white rounded-full flex items-center justify-center font-bold text-sm">
                       2
                     </div>
                     <div>
@@ -385,24 +385,24 @@ export default function Editor() {
                     </div>
                   </div>
                   <div className="flex items-start space-x-3">
-                    <div className="w-8 h-8 bg-solana-gradient text-white rounded-full flex items-center justify-center font-bold text-sm">
+                    <div className="w-8 h-8 bg-binance-gradient text-white rounded-full flex items-center justify-center font-bold text-sm">
                       3
                     </div>
                     <div>
                       <h4 className="font-medium text-white">AI Processing</h4>
                       <p className="text-sm text-gray-300">
-                        Our AI analyzes and adds the perfect ✌️-sign gesture
+                        Our AI analyzes and adds the perfect 4-finger gesture
                       </p>
                     </div>
                   </div>
                   <div className="flex items-start space-x-3">
-                    <div className="w-8 h-8 bg-solana-gradient text-white rounded-full flex items-center justify-center font-bold text-sm">
+                    <div className="w-8 h-8 bg-binance-gradient text-white rounded-full flex items-center justify-center font-bold text-sm">
                       4
                     </div>
                     <div>
                       <h4 className="font-medium text-white">Download</h4>
                       <p className="text-sm text-gray-300">
-                        Download your enhanced image with ✌️-sign magic
+                        Download your enhanced image with 4-finger magic
                       </p>
                     </div>
                   </div>
@@ -411,7 +411,7 @@ export default function Editor() {
 
               {/* X (Twitter) Sharing Section */}
               {currentImage?.status === 'completed' && currentImage?.processedUrl && (
-                <div className="mt-12 bg-dark-800/50 border border-dark-600 rounded-2xl p-8">
+                <div className="mt-12 bg-black border border-dark-600 rounded-2xl p-8">
                   <div className="text-center">
                     <div className="flex justify-center mb-4">
                       <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
@@ -422,7 +422,7 @@ export default function Editor() {
                       Share Your Creation
                     </h3>
                     <p className="text-gray-300 mb-6">
-                      Show off your enhanced ✌️ PFP to the world!
+                      Show off your enhanced 4-finger PFP to the world!
                     </p>
                     <button
                       onClick={handleShareOnX}

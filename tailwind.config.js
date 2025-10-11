@@ -9,22 +9,24 @@ export default {
     },
     extend: {
       colors: {
-        // Solana brand colors
-        solana: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          200: '#bae6fd',
-          300: '#7dd3fc',
-          400: '#38bdf8',
-          500: '#0ea5e9',
-          600: '#0284c7',
-          700: '#0369a1',
-          800: '#075985',
-          900: '#0c4a6e',
-          primary: '#9945FF',
-          secondary: '#14F195',
-          purple: '#9945FF',
-          green: '#14F195',
+        // Bright green brand colors
+        binance: {
+          50: '#f0fdf4',
+          100: '#dcfce7',
+          200: '#bbf7d0',
+          300: '#86efac',
+          400: '#4ade80',
+          500: '#22c55e',
+          600: '#16a34a',
+          700: '#15803d',
+          800: '#166534',
+          900: '#14532d',
+          primary: '#00FF41',
+          secondary: '#000000',
+          yellow: '#00FF41',
+          black: '#000000',
+          accent: '#00FF88',
+          dark: '#1a1a1a',
         },
         // Dark theme colors
         dark: {
@@ -42,8 +44,9 @@ export default {
         }
       },
       backgroundImage: {
-        'solana-gradient': 'linear-gradient(135deg, #9945FF 0%, #14F195 100%)',
-        'dark-gradient': 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)',
+        'binance-gradient': 'linear-gradient(135deg, #00FF41 0%, #000000 100%)',
+        'binance-accent-gradient': 'linear-gradient(135deg, #00FF88 0%, #00FF41 100%)',
+        'dark-gradient': 'linear-gradient(135deg, #000000 0%, #1a1a1a 50%, #2a2a2a 100%)',
       }
     },
   },

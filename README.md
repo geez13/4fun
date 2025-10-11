@@ -1,15 +1,61 @@
-# React + TypeScript + Vite
+# Four.Fun - Digital Signature Platform
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Four.Fun is a modern web application for digital image signing and verification using blockchain technology. Built with React, TypeScript, and Solana integration, it provides a secure and user-friendly platform for digital asset authentication.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Image Upload & Processing**: Drag-and-drop image upload with validation
+- **Digital Signatures**: Blockchain-based digital signing using Solana
+- **Wallet Integration**: Support for various Solana wallets
+- **History Tracking**: View and manage your signed images
+- **VWall Gallery**: Showcase of signed digital assets
+- **Real-time Processing**: Live updates on signature status
 
-## Expanding the ESLint configuration
+## Tech Stack
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **Frontend**: React 18 + TypeScript + Vite
+- **Styling**: Tailwind CSS + Framer Motion
+- **Blockchain**: Solana Web3.js + Wallet Adapters
+- **Backend**: Express.js + TypeScript
+- **Database**: Supabase
+- **Image Processing**: Sharp
+- **File Upload**: React Dropzone + Multer
+
+## Installation
+
+1. Clone the repository:
+```bash
+git clone <your-fork-url>
+cd four.fun
+```
+
+2. Install dependencies:
+```bash
+pnpm install
+```
+
+3. Set up environment variables:
+```bash
+cp .env.example .env
+```
+Fill in your Supabase and other required environment variables.
+
+4. Start the development server:
+```bash
+pnpm dev
+```
+
+## Usage
+
+1. **Upload Images**: Drag and drop images onto the upload area
+2. **Connect Wallet**: Connect your Solana wallet for signing
+3. **Sign Images**: Process and digitally sign your images
+4. **View History**: Track all your signed images
+5. **Browse VWall**: Explore the gallery of signed digital assets
+
+## Development
+
+For production builds and advanced ESLint configuration:
 
 ```js
 export default tseslint.config({

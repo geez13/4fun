@@ -18,7 +18,7 @@ This guide will walk you through setting up Supabase for your V-Sign Photo Edito
    - Click "New Project"
    - Choose your organization
    - Enter project details:
-     - **Name**: `vsign-photo-editor`
+     - **Name**: `four-fun-app`
      - **Database Password**: Create a strong password (save this!)
      - **Region**: Choose the region closest to your users
    - Click "Create new project"

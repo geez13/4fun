@@ -3,7 +3,7 @@ import { Toaster } from 'sonner'
 import { WalletContextProvider } from "@/contexts/WalletContext";
 import Home from "@/pages/Home";
 import Editor from "@/pages/Editor";
-import History from "@/pages/History";
+import Lore from "@/pages/Lore";
 import { VWall } from "@/pages/VWall";
 
 
@@ -16,7 +16,7 @@ export default function App() {
             <Route path="/" element={<Home />} />
             <Route path="/editor" element={<Editor />} />
             <Route path="/vwall" element={<VWall />} />
-            <Route path="/history" element={<History />} />
+            <Route path="/lore" element={<Lore />} />
           </Routes>
         </Router>
       </WalletContextProvider>

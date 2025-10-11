@@ -1,6 +1,8 @@
 import { GoogleGenAI } from '@google/genai';
 import sharp from 'sharp';
 import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
 
 dotenv.config();
 
@@ -10,7 +12,7 @@ const GEMINI_CONFIGURED = GOOGLE_API_KEY && GOOGLE_API_KEY !== '' && !GOOGLE_API
 // Initialize with API key - the library expects GEMINI_API_KEY env var or explicit key
 const ai = GEMINI_CONFIGURED ? new GoogleGenAI({ apiKey: GOOGLE_API_KEY }) : null;
 
-export interface VSignProcessingOptions {
+export interface FourFingerProcessingOptions {
   style?: 'natural' | 'artistic' | 'cartoon';
   prompt?: string;
 }
@@ -68,209 +70,125 @@ export class GeminiService {
     }
   }
 
-  private async createDemoProcessedImage(imageBuffer: Buffer, mimeType: string): Promise<string> {
-    // Simulate processing time
-    await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 2000));
-    
-    console.log('🎨 Creating DRAMATIC demo processed image with multiple visual effects...');
-    
+
+
+  private async createWatermarkSvg(imageWidth: number, imageHeight: number): Promise<string> {
     try {
-      // Get image metadata
-      const metadata = await sharp(imageBuffer).metadata();
-      const { width = 800, height = 600 } = metadata;
+      // Read the watermark SVG file
+      const watermarkPath = '/Users/agieshendrairawan/Geez13/AREA/Crypto/BSC/4fun/four.fun/src/assets/wm.svg';
+      let watermarkContent = '';
       
-      // Apply multiple dramatic effects in sequence
-      const enhancedBuffer = await sharp(imageBuffer)
-        // Step 1: Dramatic color enhancements
-        .modulate({ 
-          brightness: 1.3,    // 30% brighter
-          saturation: 1.6,    // 60% more saturated
-          hue: 15             // Noticeable hue shift
-        })
-        // Step 2: Increase contrast and sharpness
-        .linear(1.2, -(128 * 1.2) + 128) // Increase contrast
-        .sharpen({ sigma: 1.5 })
-        .toBuffer();
+      try {
+        watermarkContent = fs.readFileSync(watermarkPath, 'utf8');
+      } catch (error) {
+        console.warn('⚠️ Watermark file not found, using fallback watermark');
+        // Fallback watermark if file doesn't exist
+        watermarkContent = `
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <text x="50" y="50" text-anchor="middle" font-family="Arial" font-size="24" fill="#000" opacity="0.3">四.fun</text>
+          </svg>
+        `;
+      }
       
-      // Step 3: Add the dramatic V-sign overlay
-      const finalResult = await this.addVSignOverlay(enhancedBuffer, mimeType);
+      // Calculate watermark size (responsive scaling)
+      const maxWatermarkWidth = Math.min(imageWidth * 0.15, 200); // Max 15% of image width or 200px
+      const maxWatermarkHeight = Math.min(imageHeight * 0.15, 150); // Max 15% of image height or 150px
       
-      console.log('✅ Demo mode: Applied dramatic color enhancement + V-sign overlay');
-      return finalResult;
+      // Position watermark in bottom-right corner with 20px margins
+      const watermarkX = imageWidth - maxWatermarkWidth - 20;
+      const watermarkY = imageHeight - maxWatermarkHeight - 20;
+      
+      // Create the positioned watermark SVG
+      const positionedWatermark = `
+        <svg width="${imageWidth}" height="${imageHeight}" xmlns="http://www.w3.org/2000/svg">
+          <g transform="translate(${watermarkX}, ${watermarkY})" opacity="0.3">
+            <g transform="scale(${maxWatermarkWidth / 1017.92}, ${maxWatermarkHeight / 564.73})">
+              ${watermarkContent.replace(/<\?xml[^>]*\?>/, '').replace(/<svg[^>]*>/, '').replace(/<\/svg>/, '')}
+            </g>
+          </g>
+        </svg>
+      `;
+      
+      console.log(`🏷️ Created watermark: ${maxWatermarkWidth}x${maxWatermarkHeight} at position (${watermarkX}, ${watermarkY})`);
+      return positionedWatermark;
       
     } catch (error) {
-      console.error('❌ Error in demo processing, falling back to basic overlay:', error);
-      // Fallback to just the overlay if color processing fails
-      return await this.addVSignOverlay(imageBuffer, mimeType);
+      console.error('❌ Error creating watermark SVG:', error);
+      // Return empty SVG if watermark creation fails
+      return `<svg width="${imageWidth}" height="${imageHeight}" xmlns="http://www.w3.org/2000/svg"></svg>`;
     }
   }
 
-  private async addVSignOverlay(imageBuffer: Buffer, mimeType: string): Promise<string> {
+  private async addFourFingerOverlay(imageBuffer: Buffer, mimeType: string): Promise<string> {
     try {
-      console.log('🎨 Adding DRAMATIC V-sign overlay to image using Sharp...');
+      console.log('🏷️ Adding watermark to image...');
       
       // Get image metadata
       const metadata = await sharp(imageBuffer).metadata();
       const { width = 800, height = 600 } = metadata;
       
       console.log(`📐 Image dimensions: ${width}x${height}`);
+
+      // Read and prepare the watermark SVG
+      const watermarkSvg = await this.createWatermarkSvg(width, height);
       
-      // Create a much more dramatic V-sign overlay SVG
-      const vSignSvg = `
-        <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-          <!-- Dramatic gradient background overlay -->
-          <defs>
-            <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style="stop-color:rgba(255,0,150,0.15);stop-opacity:1" />
-              <stop offset="50%" style="stop-color:rgba(0,150,255,0.15);stop-opacity:1" />
-              <stop offset="100%" style="stop-color:rgba(150,0,255,0.15);stop-opacity:1" />
-            </linearGradient>
-            <linearGradient id="vSignGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style="stop-color:#FF0080;stop-opacity:1" />
-              <stop offset="50%" style="stop-color:#0080FF;stop-opacity:1" />
-              <stop offset="100%" style="stop-color:#8000FF;stop-opacity:1" />
-            </linearGradient>
-            <filter id="glow">
-              <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-              <feMerge> 
-                <feMergeNode in="coloredBlur"/>
-                <feMergeNode in="SourceGraphic"/>
-              </feMerge>
-            </filter>
-          </defs>
-          
-          <!-- Gradient background overlay -->
-          <rect x="0" y="0" width="${width}" height="${height}" fill="url(#bgGradient)" />
-          
-          <!-- PROMINENT V-sign watermark in top-right corner -->
-          <g transform="translate(${width - 150}, 20)">
-            <!-- Large glowing background circle -->
-            <circle cx="60" cy="60" r="55" fill="rgba(255,255,255,0.95)" 
-                    stroke="url(#vSignGradient)" stroke-width="4" filter="url(#glow)"/>
-            
-            <!-- Large, bold V-sign fingers -->
-            <path d="M 30 35 L 40 85 L 50 85 L 60 40 L 70 85 L 80 85 L 90 35" 
-                  stroke="url(#vSignGradient)" stroke-width="10" fill="none" 
-                  stroke-linecap="round" filter="url(#glow)"/>
-            
-            <!-- Large peace symbol text -->
-             <text x="60" y="105" text-anchor="middle" font-family="Arial, sans-serif" 
-                   font-size="16" fill="url(#vSignGradient)" font-weight="bold" filter="url(#glow)">V-SIGN</text>
-          </g>
-          
-          <!-- LARGE processing indicator at bottom -->
-          <g transform="translate(${width / 2 - 150}, ${height - 60})">
-            <rect x="0" y="0" width="300" height="45" rx="22" fill="url(#vSignGradient)" filter="url(#glow)"/>
-            <text x="150" y="30" text-anchor="middle" font-family="Arial, sans-serif" 
-                   font-size="18" fill="white" font-weight="bold">AI ENHANCED</text>
-          </g>
-          
-          <!-- PROMINENT border effect -->
-          <rect x="8" y="8" width="${width - 16}" height="${height - 16}" 
-                fill="none" stroke="url(#vSignGradient)" stroke-width="6" rx="15" filter="url(#glow)"/>
-          
-          <!-- Corner V-sign indicators -->
-           <g transform="translate(20, 20)">
-             <text font-family="Arial, sans-serif" font-size="24" fill="url(#vSignGradient)" 
-                   font-weight="bold" filter="url(#glow)">V</text>
-           </g>
-           <g transform="translate(${width - 50}, ${height - 50})">
-             <text font-family="Arial, sans-serif" font-size="24" fill="url(#vSignGradient)" 
-                   font-weight="bold" filter="url(#glow)">V</text>
-           </g>
-        </svg>
-      `;
-      
-      // Apply dramatic color adjustments and the overlay
+      // Apply only the watermark without any color enhancements
       const processedBuffer = await sharp(imageBuffer)
-        // First apply color enhancements to make the image more vibrant
-        .modulate({ 
-          brightness: 1.2,    // 20% brighter
-          saturation: 1.4,    // 40% more saturated
-          hue: 10             // Slight hue shift
-        })
-        // Add the dramatic overlay
         .composite([
+          // Add only the watermark SVG
           {
-            input: Buffer.from(vSignSvg),
+            input: Buffer.from(watermarkSvg),
             top: 0,
             left: 0,
           }
         ])
-        .jpeg({ quality: 95 }) // Higher quality for better visibility
+        .jpeg({ quality: 95 })
         .toBuffer();
       
       // Convert to base64
       const base64Image = processedBuffer.toString('base64');
       const resultDataUrl = `data:image/jpeg;base64,${base64Image}`;
       
-      console.log('✅ Successfully added V-sign overlay with visual modifications');
+      console.log('✅ Successfully added watermark');
       console.log(`📊 Original size: ${imageBuffer.length} bytes, Processed size: ${processedBuffer.length} bytes`);
       
       return resultDataUrl;
       
     } catch (error) {
-      console.error('❌ Error adding V-sign overlay:', error);
+      console.error('❌ Error adding watermark:', error);
       
-      // Fallback: return original image with basic modification
+      // Fallback: return original image without modifications
       try {
-        console.log('🔄 Attempting basic fallback modification...');
+        console.log('🔄 Returning original image...');
         
-        // Apply a simple tint and border as fallback
-        const fallbackBuffer = await sharp(imageBuffer)
-          .modulate({ 
-            brightness: 1.1,  // Slightly brighter
-            saturation: 1.2   // More saturated
-          })
-          .jpeg({ quality: 90 })
-          .toBuffer();
-        
-        const base64Image = fallbackBuffer.toString('base64');
-        console.log('✅ Applied fallback modification (brightness/saturation adjustment)');
-        
-        return `data:image/jpeg;base64,${base64Image}`;
-        
-      } catch (fallbackError) {
-        console.error('❌ Fallback modification also failed:', fallbackError);
-        
-        // Last resort: return original but log the issue
         const base64Image = imageBuffer.toString('base64');
         const originalMimeType = mimeType || 'image/jpeg';
-        console.warn('⚠️ Returning original image due to processing errors');
+        console.log('✅ Returned original image');
         
         return `data:${originalMimeType};base64,${base64Image}`;
+        
+      } catch (fallbackError) {
+        console.error('❌ Failed to process original image:', fallbackError);
+        throw fallbackError;
       }
     }
   }
 
-  async processVSignImage(
+  async processFourFingerImage(
     imageBuffer: Buffer,
     mimeType: string,
-    options: VSignProcessingOptions = {}
+    options: FourFingerProcessingOptions = {}
   ): Promise<ProcessingResult> {
     const startTime = Date.now();
-    console.log('🎯 Starting ✌️-sign processing...', { mimeType, options });
+    console.log('🎯 Starting 四-finger processing...', { mimeType, options });
 
     if (!this.isConfigured()) {
-      console.warn('⚠️ Gemini API not configured - using demo mode');
-      try {
-        const processedImageData = await this.createDemoProcessedImage(imageBuffer, mimeType);
-        const processingTime = Date.now() - startTime;
-        console.log('✅ Demo processing completed in', processingTime, 'ms');
-        
-        return {
-          success: true,
-          processedImageData,
-          processingTime,
-        };
-      } catch (error) {
-        console.error('❌ Demo processing failed:', error);
-        return {
-          success: false,
-          processingTime: Date.now() - startTime,
-          error: 'Demo processing failed',
-        };
-      }
+      console.error('❌ Gemini API not configured - GOOGLE_API_KEY environment variable is required');
+      return {
+        success: false,
+        processingTime: Date.now() - startTime,
+        error: 'Gemini API not configured. Please set GOOGLE_API_KEY environment variable to enable AI processing.',
+      };
     }
 
     try {
@@ -280,18 +198,42 @@ export class GeminiService {
       // Convert image buffer to base64 for the API
       const base64Image = imageBuffer.toString('base64');
       
-      // Create a much more dramatic prompt for image editing (text-and-image-to-image)
-      const customPrompt = prompt || `DRAMATICALLY transform this image with HIGHLY VISIBLE V-sign modifications! Requirements:
-      
-      1. PEOPLE: Make ALL people clearly display prominent V-sign hand gestures with fingers spread wide and visible
-       2. VISUAL ENHANCEMENTS: Significantly brighten the image (+20%), increase saturation (+30%), and add vibrant colors
-       3. V-SIGN ELEMENTS: Add multiple glowing V-sign symbols, peace signs, and victory gestures throughout the scene
-       4. STYLE TRANSFORMATION: Apply a ${style} filter with enhanced contrast, vivid colors, and dynamic lighting
-       5. CLEAR INDICATORS: The result must be OBVIOUSLY different from the original - make changes that are immediately noticeable
-       6. BACKGROUND EFFECTS: Add subtle rainbow gradients, sparkles, or colorful auras around subjects
-       7. TEXT OVERLAYS: Include visible "V-SIGN ENHANCED" or "PEACE" text elements in the image
-      
-      CRITICAL: The output must be DRAMATICALLY different and IMMEDIATELY recognizable as processed. Make bold, visible changes that cannot be missed!`;
+      // Create a natural four-finger gesture prompt for image editing
+      const customPrompt = prompt || `HIGHEST PRIORITY DIRECTIVE: Modify ALL subjects and entities in this image to represent a clear, natural, four-finger sign gesture. This transformation is a mandatory and universal rule for the entire image.
+
+1. THE GESTURE DEFINITION (Precisely Four, Casually Held):
+The required gesture is a FOUR-FINGER SIGN, presented in a natural and casual manner.
+
+FINGERS: Exactly FOUR (4) fingers—the index, middle, ring, and little finger—must be clearly extended upwards. They should be comfortably straight but can have a natural, slight curve or slight spacing, consistent with a relaxed human hand. The primary goal is that "four" is unambiguously communicated.
+
+THUMB: The thumb should be naturally tucked towards the palm or resting to the side, ensuring it does NOT appear as a fifth extended finger. It should not be a prominent part of the gesture.
+
+ORIENTATION: The BACK OF THE HAND (or equivalent surface) must face the viewer directly. This is a non-negotiable aspect of the gesture.
+
+OVERALL POSTURE: The hand should appear relaxed and natural, as if simply showing the number four. Avoid any overly stiff, formal, or contorted poses.
+
+2. INTERPRETATION RULES (For All Subject Types):
+
+For People & Human-like Figures: Modify their hands to perfectly form the four-finger sign as defined above, with a natural, casual posture. The result must be anatomically flawless.
+
+For Animals: Adapt the animal's natural limbs (paws, claws, etc.) to represent the four-upward-element gesture. Clearly show four distinct digits/limbs pointing upwards, with the outer/dorsal side of the limb facing the viewer. DO NOT create human hands on animals. The interpretation must be naturalistic to the animal.
+
+For Inanimate Objects & Abstract Elements: Creatively interpret the four-element shape of the gesture. You can:
+
+Sprout stylized arms that make the gesture.
+
+Incorporate the four-finger symbol onto a surface.
+
+Cast a shadow in the exact shape of the gesture.
+
+3. QUALITY & INTEGRATION STANDARDS:
+
+Seamless Blending: The modification must be perfectly integrated. All new elements must flawlessly match the original image's art style, lighting, shadows, color grading, and texture.
+
+Maintain Realism: For photographic images, the edit must be indistinguishable from a real photo.
+
+NEGATIVE PROMPT (Crucial for preventing errors):
+three fingers, 3 fingers, three digits, three-fingered, two fingers, 2 fingers, five fingers, 5 fingers, five digits, five-fingered, visible thumb, exposed thumb, thumb showing as fifth finger, fingers spread wide apart, overly stiff hand, contorted hand, distorted hand, mangled fingers, extra fingers, missing fingers, malformed hand, palm, front of hand, open palm, incorrect number of fingers.`;
 
       console.log('📝 Using prompt:', customPrompt);
       console.log('🖼️ Image data length:', base64Image.length);
@@ -346,12 +288,12 @@ export class GeminiService {
                 console.warn(`⚠️ Gemini returned ${imageData === base64Image ? 'identical' : 'too similar'} image (${comparison.difference.toFixed(2)}% difference), applying dramatic processing...`);
                 
                 // Apply our dramatic modifications to ensure visual difference
-                processedImageData = await this.addVSignOverlay(geminiBuffer, imageMimeType);
+                processedImageData = await this.addFourFingerOverlay(geminiBuffer, imageMimeType);
               } else {
                 console.log(`✅ Gemini generated sufficiently different image (${comparison.difference.toFixed(2)}% difference)`);
                 
                 // Even if Gemini made changes, still apply our overlay for consistency
-                processedImageData = await this.addVSignOverlay(geminiBuffer, imageMimeType);
+                processedImageData = await this.addFourFingerOverlay(geminiBuffer, imageMimeType);
               }
               break;
             }
@@ -360,7 +302,7 @@ export class GeminiService {
       }
       
       if (!processedImageData) {
-        console.warn('⚠️ No image data found in response, falling back to demo mode');
+        console.warn('⚠️ No image data found in Gemini response');
         throw new Error('No image data in Gemini response');
       }
       
@@ -407,31 +349,17 @@ export class GeminiService {
       
       console.error(`❌ Gemini processing failed (${errorType}):`, errorMessage);
       
-      // Fallback to demo mode when Gemini fails
-      try {
-        console.log('🔄 Attempting fallback to demo mode...');
-        const processedImageData = await this.createDemoProcessedImage(imageBuffer, mimeType);
-        console.log('✅ Fallback demo processing completed in', Date.now() - startTime, 'ms');
-        
-        return {
-          success: true,
-          processedImageData,
-          processingTime: Date.now() - startTime,
-        };
-      } catch (demoError) {
-        console.error('❌ Both Gemini and demo processing failed:', demoError);
-        return {
-          success: false,
-          processingTime: Date.now() - startTime,
-          error: `AI processing failed (${errorType}): ${errorMessage}. Demo fallback also failed.`,
-        };
-      }
+      return {
+        success: false,
+        processingTime: Date.now() - startTime,
+        error: `AI processing failed (${errorType}): ${errorMessage}`,
+      };
     }
   }
 
   async testConnection(): Promise<boolean> {
     if (!this.isConfigured()) {
-      console.warn('⚠️ Gemini API not configured - skipping connection test');
+      console.error('❌ Gemini API not configured - GOOGLE_API_KEY environment variable is required for connection test');
       return false;
     }
 

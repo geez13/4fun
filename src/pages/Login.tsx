@@ -63,7 +63,7 @@ export default function Login() {
             </p>
           </div>
 
-          <div className="bg-dark-800/50 border border-dark-600 rounded-2xl p-8">
+          <div className="bg-black border border-dark-600 rounded-2xl p-8">
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Email Field */}
               <div>
@@ -82,7 +82,7 @@ export default function Login() {
                     required
                     value={formData.email}
                     onChange={handleChange}
-                    className="block w-full pl-10 pr-3 py-3 bg-dark-700 border border-dark-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-solana-primary focus:border-transparent placeholder-gray-400"
+                    className="block w-full pl-10 pr-3 py-3 bg-black border border-dark-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-solana-primary focus:border-transparent placeholder-gray-400"
                     placeholder="Enter your email"
                   />
                 </div>
@@ -105,7 +105,7 @@ export default function Login() {
                     required
                     value={formData.password}
                     onChange={handleChange}
-                    className="block w-full pl-10 pr-10 py-3 bg-dark-700 border border-dark-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-solana-primary focus:border-transparent placeholder-gray-400"
+                    className="block w-full pl-10 pr-10 py-3 bg-black border border-dark-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-solana-primary focus:border-transparent placeholder-gray-400"
                     placeholder="Enter your password"
                   />
                   <button
@@ -126,7 +126,7 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-solana-gradient hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-solana-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-binance-gradient hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-binance-primary disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? (
                   <div className="flex items-center">
@@ -145,7 +145,7 @@ export default function Login() {
                   Don't have an account?{' '}
                   <Link
                     to="/register"
-                    className="font-medium text-solana-primary hover:text-solana-secondary"
+                    className="font-medium text-binance-primary hover:text-binance-accent"
                   >
                     Sign up here
                   </Link>
@@ -154,13 +154,13 @@ export default function Login() {
           </div>
 
           {/* Demo Credentials */}
-          <div className="bg-blue-50 rounded-lg p-4">
+          <div className="bg-black rounded-lg p-4">
             <h3 className="text-sm font-medium text-blue-900 mb-2">Demo Account</h3>
             <p className="text-xs text-blue-700 mb-2">
               You can create a new account or use these demo credentials:
             </p>
             <div className="text-xs text-blue-600 space-y-1">
-              <p><strong>Email:</strong> demo@vsigneditor.com</p>
+              <p><strong>Email:</strong> demo@four.fun</p>
               <p><strong>Password:</strong> demo123456</p>
             </div>
           </div>

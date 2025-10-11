@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { Shield, CheckCircle, XCircle, Loader2, ExternalLink, Coins } from 'lucide-react';
+import { useAccount, useSignMessage, useChainId } from 'wagmi';
+import { Shield, CheckCircle, XCircle, Loader2, ExternalLink, Coins, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
+import { bsc, bscTestnet } from 'wagmi/chains';
 import { apiService } from '../services/api';
 import RetryButton from './RetryButton';
 
@@ -29,17 +30,35 @@ export const TokenGateChecker: React.FC<TokenGateCheckerProps> = ({
   onAccessGranted,
   onAccessDenied
 }) => {
-  const { connected, publicKey, signMessage } = useWallet();
+  const { address, isConnected } = useAccount();
+  const { signMessageAsync } = useSignMessage();
+  const chainId = useChainId();
   const [status, setStatus] = useState<TokenGateStatus>({
-    isLoading: false,
+    isLoading: true,
     hasAccess: false,
     tokenBalance: 0,
     isVerifying: false
   });
 
+  // Check if user is on the correct network (BSC)
+  const isCorrectNetwork = chainId === bsc.id || chainId === bscTestnet.id;
+  const currentNetwork = chainId === bsc.id ? 'BSC Mainnet' : chainId === bscTestnet.id ? 'BSC Testnet' : 'Unknown';
+
   const checkTokenAccess = async () => {
-    if (!connected || !publicKey) {
+    if (!isConnected || !address) {
       setStatus({ isLoading: false, hasAccess: false, tokenBalance: 0, isVerifying: false });
+      return;
+    }
+
+    // Check network first
+    if (!isCorrectNetwork) {
+      setStatus(prev => ({
+        ...prev,
+        isLoading: false,
+        hasAccess: false,
+        isVerifying: false,
+        error: `Please switch to BNB Chain. Currently on: ${currentNetwork}`
+      }));
       return;
     }
 
@@ -48,8 +67,36 @@ export const TokenGateChecker: React.FC<TokenGateCheckerProps> = ({
   };
 
   const verifyTokenAccess = async () => {
-    if (!connected || !publicKey || !signMessage) {
-      toast.error('Wallet not properly connected');
+    if (!isConnected || !address) {
+      setStatus(prev => ({
+        ...prev,
+        hasAccess: false,
+        isVerifying: false,
+        error: 'Wallet not connected'
+      }));
+      return;
+    }
+
+    // Check network
+    if (!isCorrectNetwork) {
+      setStatus(prev => ({
+        ...prev,
+        hasAccess: false,
+        isVerifying: false,
+        error: `Please switch to BNB Chain. Currently on: ${currentNetwork}`
+      }));
+      toast.error(`Please switch to BNB Chain. Currently on: ${currentNetwork}`);
+      return;
+    }
+
+    if (!signMessageAsync) {
+      setStatus(prev => ({
+        ...prev,
+        hasAccess: false,
+        isVerifying: false,
+        error: 'Wallet does not support message signing'
+      }));
+      toast.error('Wallet does not support message signing');
       return;
     }
 
@@ -57,17 +104,32 @@ export const TokenGateChecker: React.FC<TokenGateCheckerProps> = ({
 
     try {
       // Create verification message
-      const message = `Verify token access for V-Sign Magic\nWallet: ${publicKey.toString()}\nTimestamp: ${Date.now()}`;
-      const messageBytes = new TextEncoder().encode(message);
+      const message = `Verify token access for 4-Finger Magic\nWallet: ${address}\nTimestamp: ${Date.now()}`;
       
-      // Sign the message
-      const signature = await signMessage(messageBytes);
-      const signatureBase64 = Buffer.from(signature).toString('base64');
+      // Sign the message with better error handling
+      let signature: string;
+      try {
+        signature = await signMessageAsync({ account: address, message });
+      } catch (signError: any) {
+        console.error('Message signing failed:', signError);
+        
+        // Handle specific wallet errors
+        let errorMessage = 'Failed to sign message. Please try again or check your wallet connection.';
+        if (signError?.message?.includes('User rejected')) {
+          errorMessage = 'Message signing was cancelled. Please try again.';
+        } else if (signError?.message?.includes('network')) {
+          errorMessage = 'Network error. Please check your connection and try again.';
+        } else if (signError?.message?.includes('connector')) {
+          errorMessage = 'Wallet connection error. Please reconnect your wallet and try again.';
+        }
+        
+        throw new Error(errorMessage);
+      }
 
       // Send verification request to backend using API service
       const result = await apiService.verifyTokenAccess(
-        publicKey.toString(),
-        signatureBase64,
+        address,
+        signature,
         message
       );
 
@@ -103,36 +165,63 @@ export const TokenGateChecker: React.FC<TokenGateCheckerProps> = ({
         onAccessDenied?.();
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error verifying token access:', error);
       setStatus(prev => ({
         ...prev,
         hasAccess: false,
         isVerifying: false,
-        error: 'Failed to verify token access. Please try again.'
+        error: error.message || 'Failed to verify token access. Please try again.'
       }));
       
-      toast.error('Failed to verify token access');
+      toast.error(error.message || 'Failed to verify token access');
       onAccessDenied?.();
     }
   };
 
   useEffect(() => {
     checkTokenAccess();
-  }, [connected, publicKey, requiredTokens]);
+  }, [isConnected, address, requiredTokens, chainId]);
 
-  if (!connected) {
+  if (!isConnected) {
     return (
       <div className={`flex flex-col items-center justify-center p-8 bg-gradient-to-br from-gray-900/50 to-gray-800/50 rounded-xl border border-gray-700/50 backdrop-blur-sm ${className}`}>
         <Shield className="w-16 h-16 text-gray-400 mb-4" />
         <h3 className="text-xl font-semibold text-white mb-2">Wallet Connection Required</h3>
         <p className="text-gray-400 text-center mb-4">
-          Please connect your Solana wallet to verify your token balance.
+          Please connect your BNB Chain wallet to verify your token balance.
         </p>
         <div className="flex items-center gap-2 text-sm text-gray-500">
           <Coins className="w-4 h-4" />
-          <span>Requires {requiredTokens} token minimum</span>
+          <span>Requires {requiredTokens} "4" token minimum</span>
         </div>
+      </div>
+    );
+  }
+
+  // Show network warning if on wrong network
+  if (!isCorrectNetwork) {
+    return (
+      <div className={`flex flex-col items-center justify-center p-8 bg-gradient-to-br from-orange-900/20 to-red-900/20 rounded-xl border border-orange-500/30 backdrop-blur-sm ${className}`}>
+        <AlertTriangle className="w-16 h-16 text-orange-400 mb-4" />
+        <h3 className="text-xl font-semibold text-white mb-2">Wrong Network</h3>
+        <p className="text-gray-400 text-center mb-4">
+          Please switch to BNB Chain to verify your "4" token balance.
+        </p>
+        <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
+          <span>Currently on: {currentNetwork}</span>
+        </div>
+        
+        <RetryButton
+          onRetry={checkTokenAccess}
+          isLoading={status.isLoading}
+          text="Check Again"
+          className="w-full max-w-sm"
+        />
+        
+        <p className="text-xs text-gray-500 mt-4 text-center">
+          Switch to BNB Chain in your wallet and click "Check Again"
+        </p>
       </div>
     );
   }
@@ -147,7 +236,7 @@ export const TokenGateChecker: React.FC<TokenGateCheckerProps> = ({
         <p className="text-gray-400 text-center">
           {status.isVerifying 
             ? 'Signing transaction and verifying your token access...'
-            : 'Checking your token balance on the Solana blockchain...'
+            : 'Checking your token balance on the BNB Chain...'
           }
         </p>
       </div>
@@ -158,9 +247,9 @@ export const TokenGateChecker: React.FC<TokenGateCheckerProps> = ({
     return (
       <div className={`flex flex-col items-center justify-center p-8 bg-gradient-to-br from-red-900/20 to-orange-900/20 rounded-xl border border-red-500/30 backdrop-blur-sm ${className}`}>
         <XCircle className="w-16 h-16 text-red-400 mb-4" />
-        <h3 className="text-xl font-semibold text-white mb-2">Verification Token Required</h3>
+        <h3 className="text-xl font-semibold text-white mb-2">"4" Token Required</h3>
         <p className="text-gray-400 text-center mb-4">
-          {status.error || `You need at least ${requiredTokens} verification token to access AI-enhanced image upload.`}
+          {status.error || `You need at least ${requiredTokens} "4" token to access AI-enhanced image upload.`}
         </p>
         <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
           <Coins className="w-4 h-4" />
@@ -176,18 +265,18 @@ export const TokenGateChecker: React.FC<TokenGateCheckerProps> = ({
           />
           
           <a
-            href="https://pump.fun/coin/B2Vecaeprrf9m3V7HAaKSFGSwoJiACCL1AKaSjc7pump"
+            href="https://pancakeswap.finance/swap?outputCurrency=0x0a43fc31a73013089df59194872ecae4cae14444"
             target="_blank"
             rel="noopener noreferrer"
             className="flex-1 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg transition-colors flex items-center justify-center gap-2"
           >
             <ExternalLink className="w-4 h-4" />
-            Buy Token
+            Buy "4" Token
           </a>
         </div>
         
         <p className="text-xs text-gray-500 mt-4 text-center">
-          Need verification tokens? Get them on pump.fun to unlock AI image enhancement features.
+          Need "4" tokens? Get them on PancakeSwap to unlock AI image enhancement features.
         </p>
       </div>
     );
@@ -200,7 +289,7 @@ export const TokenGateChecker: React.FC<TokenGateCheckerProps> = ({
         <CheckCircle className="w-16 h-16 text-green-400 mb-4" />
         <h3 className="text-xl font-semibold text-white mb-2">Token Balance Verified</h3>
         <p className="text-gray-400 text-center mb-4">
-          Great! You have {status.tokenBalance} verification tokens. Complete verification to access AI features.
+          Great! You have {status.tokenBalance} "4" tokens. Complete verification to access AI features.
         </p>
         
         <button
@@ -228,16 +317,9 @@ export const TokenGateChecker: React.FC<TokenGateCheckerProps> = ({
     );
   }
 
-  // Full access granted with session token
+  // Success state - user has access and session token
   return (
-    <div className={className}>
-      <div className="flex items-center gap-2 mb-4 p-3 bg-gradient-to-r from-green-900/20 to-emerald-900/20 rounded-lg border border-green-500/30">
-        <CheckCircle className="w-5 h-5 text-green-400" />
-        <span className="text-green-400 font-medium">Access Granted</span>
-        <span className="text-gray-400 text-sm ml-auto">
-          Balance: {status.tokenBalance} tokens
-        </span>
-      </div>
+    <div className={`${className}`}>
       {children}
     </div>
   );

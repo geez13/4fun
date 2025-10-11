@@ -1,49 +1,68 @@
-import React, { createContext, useContext, useMemo } from 'react';
-import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
-import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
-import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
-import {
-  PhantomWalletAdapter,
-  SolflareWalletAdapter,
-  TorusWalletAdapter,
-  LedgerWalletAdapter,
-} from '@solana/wallet-adapter-wallets';
-import { clusterApiUrl } from '@solana/web3.js';
+import React from 'react';
+import { WagmiProvider, createConfig, http } from 'wagmi';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { RainbowKitProvider, connectorsForWallets } from '@rainbow-me/rainbowkit';
+import { metaMaskWallet, walletConnectWallet, injectedWallet } from '@rainbow-me/rainbowkit/wallets';
+import { bsc, bscTestnet } from 'wagmi/chains';
 
-// Import wallet adapter CSS
-import '@solana/wallet-adapter-react-ui/styles.css';
+// Import RainbowKit CSS
+import '@rainbow-me/rainbowkit/styles.css';
 
 interface WalletContextProviderProps {
   children: React.ReactNode;
 }
 
+// Create a query client for React Query
+const queryClient = new QueryClient();
+
+// Get WalletConnect project ID from environment
+const walletConnectProjectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID;
+
+// Configure connectors manually to avoid compatibility issues
+const wallets = [
+  metaMaskWallet,
+  injectedWallet,
+];
+
+// Only add WalletConnect if we have a valid project ID
+if (walletConnectProjectId && walletConnectProjectId.trim() !== '' && walletConnectProjectId !== 'your-project-id-here') {
+  wallets.push(walletConnectWallet);
+}
+
+const connectors = connectorsForWallets(
+  [
+    {
+      groupName: 'Recommended',
+      wallets,
+    },
+  ],
+  {
+    appName: 'Four.Fun - Digital Signature Platform',
+    projectId: walletConnectProjectId || undefined,
+  }
+);
+
+// Configure wagmi with BNB Chain networks using manual config
+const config = createConfig({
+  connectors,
+  chains: [bsc, bscTestnet],
+  transports: {
+    [bsc.id]: http(),
+    [bscTestnet.id]: http(),
+  },
+  ssr: false,
+});
+
 export const WalletContextProvider: React.FC<WalletContextProviderProps> = ({ children }) => {
-  // The network can be set to 'devnet', 'testnet', or 'mainnet-beta'
-  const network = WalletAdapterNetwork.Devnet;
-
-  // You can also provide a custom RPC endpoint
-  const endpoint = useMemo(() => {
-    const customRpc = import.meta.env.VITE_SOLANA_RPC_URL;
-    return customRpc || clusterApiUrl(network);
-  }, [network]);
-
-  const wallets = useMemo(
-    () => [
-      new PhantomWalletAdapter(),
-      new SolflareWalletAdapter({ network }),
-      new TorusWalletAdapter(),
-      new LedgerWalletAdapter(),
-    ],
-    [network]
-  );
-
   return (
-    <ConnectionProvider endpoint={endpoint}>
-      <WalletProvider wallets={wallets} autoConnect>
-        <WalletModalProvider>
+    <WagmiProvider config={config}>
+      <QueryClientProvider client={queryClient}>
+        <RainbowKitProvider
+          modalSize="compact"
+        >
           {children}
-        </WalletModalProvider>
-      </WalletProvider>
-    </ConnectionProvider>
+        </RainbowKitProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
   );
 };

@@ -20,7 +20,7 @@ export const LoadingPlaceholder: React.FC<LoadingPlaceholderProps> = ({
   return (
     <div
       className={`
-        bg-gradient-to-br from-gray-100 to-gray-200 
+        bg-black 
         rounded-lg overflow-hidden relative
         ${animate ? 'animate-pulse' : ''}
         ${className}
@@ -38,7 +38,7 @@ export const LoadingPlaceholder: React.FC<LoadingPlaceholderProps> = ({
       
       {/* Content placeholder */}
       <div className="absolute inset-0 flex items-center justify-center">
-        <div className="w-8 h-8 rounded-full bg-gray-300" />
+        <div className="w-8 h-8 rounded-full bg-gray-600" />
       </div>
     </div>
   );

@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useAccount, useSignMessage } from 'wagmi';
 import { Sparkles, Loader2, Download, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
-import { sign } from 'tweetnacl';
 
 interface GenerationState {
   isGenerating: boolean;
@@ -21,22 +20,22 @@ export const GenerationInterface: React.FC<GenerationInterfaceProps> = ({
   uploadedFile,
   className = ''
 }) => {
-  const { publicKey, signMessage } = useWallet();
+  const { address, isConnected } = useAccount();
+  const { signMessageAsync } = useSignMessage();
   const [state, setState] = useState<GenerationState>({
     isGenerating: false
   });
 
-  const generateSignature = async (): Promise<{ signature: Uint8Array; message: string }> => {
-    if (!publicKey || !signMessage) {
+  const generateSignature = async (): Promise<{ signature: string; message: string }> => {
+    if (!address || !signMessageAsync) {
       throw new Error('Wallet not connected or does not support message signing');
     }
 
     const timestamp = Date.now();
     const nonce = Math.random().toString(36).substr(2, 9);
-    const message = `AI Generation Request\nWallet: ${publicKey.toString()}\nTimestamp: ${timestamp}\nNonce: ${nonce}`;
+    const message = `AI Generation Request\nWallet: ${address}\nTimestamp: ${timestamp}\nNonce: ${nonce}`;
     
-    const messageBytes = new TextEncoder().encode(message);
-    const signature = await signMessage(messageBytes);
+    const signature = await signMessageAsync({ account: address, message });
     
     return { signature, message };
   };
@@ -59,15 +58,15 @@ export const GenerationInterface: React.FC<GenerationInterfaceProps> = ({
     return fileName;
   };
 
-  const callGenerationAPI = async (storagePath: string, signature: Uint8Array, message: string) => {
-    const response = await fetch('/api/generate-image', {
+  const callGenerationAPI = async (storagePath: string, signature: string, message: string) => {
+    const response = await fetch('/api/images/generate-image', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        wallet_address: publicKey!.toString(),
-        signature: Array.from(signature),
+        wallet_address: address!,
+        signature,
         message,
         storage_path: storagePath
       })
@@ -87,7 +86,7 @@ export const GenerationInterface: React.FC<GenerationInterfaceProps> = ({
       return;
     }
 
-    if (!publicKey) {
+    if (!address || !isConnected) {
       toast.error('Please connect your wallet');
       return;
     }
@@ -163,10 +162,10 @@ export const GenerationInterface: React.FC<GenerationInterfaceProps> = ({
       {/* Generation Button */}
       <button
         onClick={handleGenerate}
-        disabled={!uploadedFile || state.isGenerating || !publicKey}
+        disabled={!uploadedFile || state.isGenerating || !address || !isConnected}
         className={`
           w-full py-4 px-6 rounded-xl font-semibold text-white transition-all duration-200 flex items-center justify-center gap-3
-          ${!uploadedFile || state.isGenerating || !publicKey
+          ${!uploadedFile || state.isGenerating || !address || !isConnected
             ? 'bg-gray-600 cursor-not-allowed opacity-50'
             : 'bg-gradient-to-r from-purple-600 to-green-600 hover:from-purple-700 hover:to-green-700 hover:scale-105 shadow-lg hover:shadow-purple-500/25'
           }
@@ -187,17 +186,17 @@ export const GenerationInterface: React.FC<GenerationInterfaceProps> = ({
 
       {/* Status Messages */}
       {!uploadedFile && (
-        <div className="p-4 bg-yellow-900/20 border border-yellow-500/30 rounded-lg">
-          <p className="text-yellow-400 text-sm">
+        <div className="p-4 bg-green-900/20 border border-green-500/30 rounded-lg">
+          <p className="text-green-400 text-sm">
             Please upload an image to start the AI generation process.
           </p>
         </div>
       )}
 
-      {!publicKey && (
+      {(!address || !isConnected) && (
         <div className="p-4 bg-red-900/20 border border-red-500/30 rounded-lg">
           <p className="text-red-400 text-sm">
-            Please connect your Solana wallet to proceed.
+            Please connect your BNB Chain wallet to proceed.
           </p>
         </div>
       )}
@@ -259,12 +258,12 @@ export const GenerationInterface: React.FC<GenerationInterfaceProps> = ({
       )}
 
       {/* Generation Process Info */}
-      <div className="p-4 bg-gray-800/30 border border-gray-700/50 rounded-lg">
+      <div className="p-4 bg-black border border-gray-700/50 rounded-lg">
         <h5 className="text-sm font-medium text-white mb-2">How it works:</h5>
         <ol className="text-xs text-gray-400 space-y-1">
           <li>1. Upload your image to secure storage</li>
           <li>2. Sign message with your wallet for verification</li>
-          <li>3. Verify SPL token balance on Solana blockchain</li>
+          <li>3. Verify BEP-20 token balance on BNB Chain</li>
           <li>4. Process image with AI enhancement algorithms</li>
           <li>5. Download your enhanced image</li>
         </ol>

@@ -84,14 +84,14 @@ export const ImageTile: React.FC<ImageTileProps> = ({
 
       {/* Loading state */}
       {isLoading && (
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200 animate-pulse" />
+        <div className="absolute inset-0 bg-black animate-pulse" />
       )}
 
       {/* Error state */}
       {error && (
-        <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
+        <div className="absolute inset-0 bg-black flex items-center justify-center">
           <div className="text-gray-400 text-center">
-            <div className="w-8 h-8 mx-auto mb-2 rounded-full bg-gray-300" />
+            <div className="w-8 h-8 mx-auto mb-2 rounded-full bg-gray-600" />
             <div className="text-xs">Failed to load</div>
           </div>
         </div>
