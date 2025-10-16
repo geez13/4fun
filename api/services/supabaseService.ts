@@ -407,6 +407,57 @@ export class SupabaseService {
   }
 
   /**
+   * List processed images across all users with pagination
+   * Returns images that have a processed_url and status completed, sorted by created_at desc
+   */
+  async getProcessedImages(limit: number = 20, page: number = 1): Promise<ImageRecord[]> {
+    // Validate input
+    const safeLimit = Math.min(Math.max(limit, 1), 100);
+    const safePage = Math.max(page, 1);
+    const offset = (safePage - 1) * safeLimit;
+
+    if (!SUPABASE_CONFIGURED) {
+      // Fallback mode: read from in-memory storage
+      const images = Array.from(inMemoryStorage.images.values())
+        .filter(img => !!img.processed_url && img.status === 'completed')
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(offset, offset + safeLimit);
+
+      securityLogger.debug(`Retrieved ${images.length} processed images from memory (page ${safePage}, limit ${safeLimit})`);
+      return images;
+    }
+
+    if (!connectionManager) {
+      throw new Error('Connection manager not available');
+    }
+
+    try {
+      const result = await connectionManager.executeWithRetry(async (client) => {
+        const { data, error } = await client
+          .from('images')
+          .select('*')
+          .not('processed_url', 'is', null)
+          .eq('status', 'completed')
+          .order('created_at', { ascending: false })
+          .range(offset, offset + safeLimit - 1);
+
+        if (error) {
+          securityLogger.error('Error fetching processed images', error);
+          throw new Error(`Database fetch failed: ${error.message}`);
+        }
+
+        return data || [];
+      }, `get-processed-images-${safePage}-${safeLimit}`);
+
+      securityLogger.debug(`Retrieved ${result.length} processed images (page ${safePage}, limit ${safeLimit})`);
+      return result;
+    } catch (error) {
+      securityLogger.error('Failed to get processed images', error);
+      throw error;
+    }
+  }
+
+  /**
    * Enhanced method to create processing job with validation
    */
   async createProcessingJob(jobData: Partial<ProcessingJobRecord>): Promise<ProcessingJobRecord | null> {

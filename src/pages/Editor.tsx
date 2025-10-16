@@ -10,6 +10,7 @@ import {
   Twitter
 } from 'lucide-react'
 import Layout from '../components/Layout'
+import WatermarkOverlay from '../components/WatermarkOverlay'
 import { TokenGateChecker } from '../components/TokenGateChecker'
 import ConditionalUploadZone from '../components/ConditionalUploadZone'
 import ErrorBoundary from '../components/ErrorBoundary'
@@ -111,7 +112,7 @@ export default function Editor() {
         let imageId = currentImage.imageId
         if (!imageId) {
           if (!hasTokenAccess || !sessionToken) {
-            throw new Error('Please verify your "4" token balance on BNB Chain to access upload features')
+            throw new Error('Please verify your "$四" token balance on BNB Chain to access upload features')
           }
           const uploadResponse = await apiService.uploadImageGated(currentImage.file, sessionToken)
           if (!uploadResponse.success || !uploadResponse.data?.imageId) {
@@ -129,7 +130,7 @@ export default function Editor() {
       console.log('🎨 Processing image with four-finger magic...')
       
       if (!sessionToken) {
-        throw new Error('Your session has expired. Please verify your "4" token balance again.')
+        throw new Error('Your session has expired. Please verify your "$四" token balance again.')
       }
       
       const processResponse = await apiService.processFourFinger(imageId, sessionToken, STRICT_FOUR_FINGER_PROMPT)
@@ -215,7 +216,7 @@ export default function Editor() {
               <button
                 className="px-6 py-3 rounded-lg font-medium transition-all duration-200 bg-solana-gradient text-white"
               >
-                4-Finger Magic
+                {/* 4-Finger Magic */}
               </button>
             </div>
           </div>
@@ -334,6 +335,7 @@ export default function Editor() {
                             alt="4-Finger Enhanced"
                             className="w-full h-auto rounded-lg shadow-md"
                           />
+                          <WatermarkOverlay opacity={0.28} sizeRatio={0.12} minWidth={40} maxWidth={140} offset={10} />
                         </div>
                         <button
                           onClick={handleDownload}
@@ -387,7 +389,7 @@ export default function Editor() {
                     <div>
                       <h4 className="font-medium text-white">Connect Wallet</h4>
                       <p className="text-sm text-gray-300">
-                        Connect your BNB Chain wallet and verify you have ≥1 "4" token
+                        Connect your BNB Chain wallet and verify you have ≥1 "$四" token
                       </p>
                     </div>
                   </div>

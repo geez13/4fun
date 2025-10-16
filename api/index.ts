@@ -424,10 +424,36 @@ app.post('/api/images/generate-image', requireTokenAccess, async (req, res) => {
 // ===== FOURMOVEMENT ROUTES =====
 app.get('/api/fourmovement/images', async (req, res) => {
   try {
-    // For now, return empty array (implement actual 4 Movement logic as needed)
+    const pageParam = (req.query.page as string) || '1';
+    const limitParam = (req.query.limit as string) || '20';
+    const page = Math.max(parseInt(pageParam, 10) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(limitParam, 10) || 20, 1), 100);
+
+    const records = await supabaseService.getProcessedImages(limit, page);
+
+    const images = (records || []).map((rec) => ({
+      id: rec.id,
+      image_url: rec.processed_url || rec.original_url,
+      thumbnail_url: rec.processed_url || rec.original_url,
+      optimized_url: rec.processed_url || rec.original_url,
+      aspect_ratio: 1,
+      created_at: rec.created_at,
+      prompt: 'Four Movement',
+      style: 'fourmovement',
+      owner_pubkey: '',
+      wallet_address: null,
+    }));
+
+    const hasMore = images.length === limit;
+
     res.json({
       success: true,
-      images: []
+      data: images,
+      pagination: {
+        page,
+        limit,
+        hasMore,
+      },
     });
   } catch (error) {
     console.error('4 Movement images error:', error);

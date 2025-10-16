@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import WatermarkOverlay from './WatermarkOverlay';
 import { useLazyImage } from '../hooks/useLazyLoading';
 import { GalleryImage } from '../hooks/useInfiniteImages';
 
@@ -81,6 +82,11 @@ export const ImageTile: React.FC<ImageTileProps> = ({
         `}
         loading="lazy"
       />
+
+      {/* Watermark */}
+      {!error && !isLoading && (
+        <WatermarkOverlay opacity={0.3} sizeRatio={0.18} minWidth={32} maxWidth={96} offset={8} />
+      )}
 
       {/* Loading state */}
       {isLoading && (

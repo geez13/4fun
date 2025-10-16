@@ -25,7 +25,7 @@ interface TokenGateStatus {
 
 export const TokenGateChecker: React.FC<TokenGateCheckerProps> = ({ 
   children, 
-  requiredTokens = 1,
+  requiredTokens = 2,
   className = '',
   onAccessGranted,
   onAccessDenied
@@ -235,7 +235,7 @@ export const TokenGateChecker: React.FC<TokenGateCheckerProps> = ({
         </p>
         <div className="flex items-center gap-2 text-sm text-gray-500">
           <Coins className="w-4 h-4" />
-          <span>Requires {requiredTokens} "4" token minimum</span>
+          <span>Requires {requiredTokens} "$四" token minimum</span>
         </div>
       </div>
     );
@@ -248,7 +248,7 @@ export const TokenGateChecker: React.FC<TokenGateCheckerProps> = ({
         <AlertTriangle className="w-16 h-16 text-orange-400 mb-4" />
         <h3 className="text-xl font-semibold text-white mb-2">Wrong Network</h3>
         <p className="text-gray-400 text-center mb-4">
-          Please switch to BNB Chain to verify your "4" token balance.
+          Please switch to BNB Chain to verify your "$四" token balance.
         </p>
         <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
           <span>Currently on: {currentNetwork}</span>
@@ -289,9 +289,9 @@ export const TokenGateChecker: React.FC<TokenGateCheckerProps> = ({
     return (
       <div className={`flex flex-col items-center justify-center p-8 bg-gradient-to-br from-red-900/20 to-orange-900/20 rounded-xl border border-red-500/30 backdrop-blur-sm ${className}`}>
         <XCircle className="w-16 h-16 text-red-400 mb-4" />
-        <h3 className="text-xl font-semibold text-white mb-2">"4" Token Required</h3>
+        <h3 className="text-xl font-semibold text-white mb-2"> "$四" Token Required</h3>
         <p className="text-gray-400 text-center mb-4">
-          {status.error || `You need at least ${requiredTokens} "4" token to access AI-enhanced image upload.`}
+          {status.error || `You need at least ${requiredTokens} "$四" token to access AI-enhanced image upload.`}
         </p>
         <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
           <Coins className="w-4 h-4" />
@@ -313,12 +313,12 @@ export const TokenGateChecker: React.FC<TokenGateCheckerProps> = ({
             className="flex-1 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg transition-colors flex items-center justify-center gap-2"
           >
             <ExternalLink className="w-4 h-4" />
-            Buy "4" Token
+            Buy "$四" Token
           </a>
         </div>
         
         <p className="text-xs text-gray-500 mt-4 text-center">
-          Need "4" tokens? Get them on PancakeSwap to unlock AI image enhancement features.
+          Need "$四" tokens? Get them on PancakeSwap to unlock AI image enhancement features.
         </p>
       </div>
     );
@@ -331,7 +331,7 @@ export const TokenGateChecker: React.FC<TokenGateCheckerProps> = ({
         <CheckCircle className="w-16 h-16 text-green-400 mb-4" />
         <h3 className="text-xl font-semibold text-white mb-2">Token Balance Verified</h3>
         <p className="text-gray-400 text-center mb-4">
-          Great! You have {status.tokenBalance} "4" tokens. Complete verification to access AI features.
+          Great! You have {status.tokenBalance} "$四" tokens. Complete verification to access AI features.
         </p>
         
         <button

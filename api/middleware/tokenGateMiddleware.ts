@@ -30,7 +30,7 @@ export async function requireTokenAccess(
         success: false,
         error: 'Token verification required',
         code: 'TOKEN_REQUIRED',
-        message: 'Please verify your "4" token balance on BNB Chain to access upload features'
+        message: 'Please verify your "$四" token balance on BNB Chain to access upload features'
       });
       return;
     }
@@ -43,7 +43,7 @@ export async function requireTokenAccess(
         success: false,
         error: 'Invalid or expired token session',
         code: 'TOKEN_INVALID',
-        message: 'Your token verification has expired. Please verify your "4" token balance on BNB Chain again.'
+        message: 'Your token verification has expired. Please verify your "$四" token balance on BNB Chain again.'
       });
       return;
     }

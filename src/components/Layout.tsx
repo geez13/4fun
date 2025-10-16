@@ -77,7 +77,7 @@ export default function Layout({ children }: LayoutProps) {
       <footer className="bg-black backdrop-blur-md border-t border-dark-700 mt-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center">
-            <p className="text-gray-400">&copy; 2024 ✌️-Sign PFP-Gen. Powered by Advanced AI Technology.</p>
+            <p className="text-gray-400">&copy; 2024 四-Sign PFP-Gen. Powered by Advanced 四.fun Technology.</p>
           </div>
         </div>
       </footer>

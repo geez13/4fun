@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { X, ChevronLeft, ChevronRight, Download, Share2, Heart, Eye, User, Calendar } from 'lucide-react';
+import WatermarkOverlay from './WatermarkOverlay';
 import { GalleryImage } from '../hooks/useInfiniteImages';
 
 interface ImageModalProps {
@@ -233,6 +234,11 @@ export const ImageModal: React.FC<ImageModalProps> = ({
             onLoad={handleImageLoad}
             onError={handleImageError}
           />
+
+          {/* Watermark */}
+          {!isLoading && !imageError && (
+            <WatermarkOverlay opacity={0.25} sizeRatio={0.12} minWidth={48} maxWidth={160} offset={12} />
+          )}
 
           {/* Loading state */}
           {isLoading && (

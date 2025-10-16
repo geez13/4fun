@@ -1,9 +1,12 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { Upload, Image as ImageIcon, AlertCircle, ExternalLink, Coins } from 'lucide-react';
+import { Upload, Image as ImageIcon, AlertCircle, ExternalLink, Coins, Link as LinkIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiService } from '../services/api';
 import LoadingSpinner from './LoadingSpinner';
 import RetryButton from './RetryButton';
+import { QUAD_TOKEN_CA, QUAD_TOKEN_BUY_URL, QUAD_TOKEN_DISPLAY_NAME, QUAD_TOKEN_DECIMALS_OVERRIDE } from '../lib/tokenConfig';
+import { useAccount, useReadContract } from 'wagmi';
+import { formatUnits } from 'viem';
 
 interface ConditionalUploadZoneProps {
   hasTokenAccess: boolean;
@@ -84,7 +87,7 @@ const ConditionalUploadZone: React.FC<ConditionalUploadZoneProps> = ({
       const result = await apiService.uploadImageGated(file, sessionToken);
 
       if (result.success && result.data) {
-        toast.success('Image uploaded successfully with SOL verification!');
+        toast.success(`Image uploaded successfully with ${QUAD_TOKEN_DISPLAY_NAME} verification!`);
         const imageUrl = URL.createObjectURL(file);
         onImageUploaded?.({
           file,
@@ -168,33 +171,101 @@ const ConditionalUploadZone: React.FC<ConditionalUploadZoneProps> = ({
     }
   }, [externalOnFileSelect, handleFileSelect]);
 
+  // Read $四 token balance dynamically if wallet is connected
+  const { address } = useAccount();
+
+  const erc20Abi = [
+    {
+      type: 'function',
+      name: 'balanceOf',
+      stateMutability: 'view',
+      inputs: [{ name: 'account', type: 'address' }],
+      outputs: [{ name: 'balance', type: 'uint256' }]
+    },
+    {
+      type: 'function',
+      name: 'decimals',
+      stateMutability: 'view',
+      inputs: [],
+      outputs: [{ name: 'decimals', type: 'uint8' }]
+    }
+  ] as const;
+
+  const { data: rawBalance } = useReadContract({
+    address: QUAD_TOKEN_CA as `0x${string}`,
+    abi: erc20Abi,
+    functionName: 'balanceOf',
+    args: address ? [address] : undefined,
+    query: { enabled: Boolean(address) }
+  });
+
+  const { data: tokenDecimals } = useReadContract({
+    address: QUAD_TOKEN_CA as `0x${string}`,
+    abi: erc20Abi,
+    functionName: 'decimals',
+    query: { enabled: Boolean(address) }
+  });
+
+  const decimals = tokenDecimals ?? QUAD_TOKEN_DECIMALS_OVERRIDE ?? 18;
+  const formattedBalance = rawBalance !== undefined
+    ? Number(formatUnits(rawBalance as bigint, decimals)).toFixed(4)
+    : currentBalance.toFixed(4);
+
   // Access denied state
   if (!hasTokenAccess) {
     return (
       <div className={`relative border-2 border-dashed border-red-500/50 rounded-xl p-12 text-center bg-gradient-to-br from-red-900/10 to-orange-900/10 backdrop-blur-sm ${className}`}>
         <div className="flex flex-col items-center">
           <AlertCircle className="w-16 h-16 text-red-400 mb-4" />
-          <h3 className="text-xl font-semibold text-white mb-2">SOL Token Required</h3>
+          <h3 className="text-xl font-semibold text-white mb-2">{QUAD_TOKEN_DISPLAY_NAME} Token Required</h3>
           <p className="text-gray-400 mb-4">
-            You need at least {requiredTokens} SOL to access AI-enhanced image upload.
+            You need at least {requiredTokens} {QUAD_TOKEN_DISPLAY_NAME} to access AI-enhanced image upload.
           </p>
           <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
             <Coins className="w-4 h-4" />
-            <span>Current Balance: {currentBalance.toFixed(4)} SOL</span>
+            <span>
+              Current Balance: {formattedBalance} {QUAD_TOKEN_DISPLAY_NAME}
+            </span>
+          </div>
+          <div className="space-y-3 mb-6">
+            <div className="flex items-center">
+              <a
+                href={`https://bscscan.com/token/${QUAD_TOKEN_CA}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-colors font-medium w-full sm:w-auto"
+                aria-label="View token contract on BSCScan"
+              >
+                <LinkIcon className="w-4 h-4" />
+                <span className="font-mono truncate max-w-[220px] sm:max-w-none">CA: {QUAD_TOKEN_CA}</span>
+              </a>
+            </div>
+            <div className="flex items-center gap-3 flex-wrap">
+              <a
+                href={QUAD_TOKEN_BUY_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg transition-colors font-medium w-full sm:w-auto"
+                aria-label="Buy $四 token on four.meme"
+              >
+                <ExternalLink className="w-5 h-5" />
+                Buy {QUAD_TOKEN_DISPLAY_NAME} on four.meme
+              </a>
+              <a
+                href={`https://pancakeswap.finance/swap?outputCurrency=${QUAD_TOKEN_CA}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg transition-colors font-medium w-full sm:w-auto"
+                aria-label="Buy $四 token on PancakeSwap"
+              >
+                <ExternalLink className="w-5 h-5" />
+                Buy on PancakeSwap
+              </a>
+            </div>
           </div>
           
-          <a
-            href="https://pump.fun/coin/So11111111111111111111111111111111111111111"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg transition-colors font-medium"
-          >
-            <ExternalLink className="w-5 h-5" />
-            Buy SOL Tokens
-          </a>
-          
           <p className="text-xs text-gray-500 mt-4">
-            Get SOL tokens on pump.fun to unlock AI image enhancement features.
+            Get {QUAD_TOKEN_DISPLAY_NAME} to unlock AI image enhancement features.
           </p>
         </div>
       </div>
@@ -231,7 +302,7 @@ const ConditionalUploadZone: React.FC<ConditionalUploadZoneProps> = ({
               <LoadingSpinner size="lg" />
               <h3 className="text-xl font-semibold text-white mb-2 mt-4">Uploading Image</h3>
               <p className="text-gray-400">
-                Uploading with SOL token verification...
+                Uploading with {QUAD_TOKEN_DISPLAY_NAME} token verification...
               </p>
             </>
           ) : uploadError ? (
@@ -274,7 +345,7 @@ const ConditionalUploadZone: React.FC<ConditionalUploadZoneProps> = ({
               </p>
               <div className="flex items-center gap-2 text-sm text-green-400">
                 <Coins className="w-4 h-4" />
-                <span>SOL Token Verified ✓</span>
+                <span>{QUAD_TOKEN_DISPLAY_NAME} Token Verified ✓</span>
               </div>
             </>
           )}
