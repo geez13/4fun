@@ -34,6 +34,15 @@ export default function Editor() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isDragOver, setIsDragOver] = useState(false)
 
+  // Strict prompt to enforce back-of-hand orientation and thumb tucked inside
+  const STRICT_FOUR_FINGER_PROMPT = (
+    'Adjust the hand gesture to a 4-finger sign with the thumb folded inward. ' +
+    'Show the BACK of the hand, knuckles facing the viewer; palm is completely hidden. ' +
+    'Ensure the thumb is fully tucked inside and NOT visible from the front perspective. ' +
+    'Preserve realistic anatomy, lighting, shadows, and skin texture consistent with the original image. ' +
+    'Negative prompt: palm visible, front-of-hand view, visible thumb, five fingers, three fingers, distorted/warped hands.'
+  )
+
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes'
     const k = 1024
@@ -98,23 +107,32 @@ export default function Editor() {
       setProcessingProgress(10)
       console.log('🔄 Uploading image to server...')
       
-      const uploadResponse = await apiService.uploadImage(currentImage.file)
-      
-      if (!uploadResponse.success || !uploadResponse.data?.imageId) {
-        throw new Error(uploadResponse.error || 'Failed to upload image')
-      }
-
-      const imageId = uploadResponse.data.imageId
-      console.log('✅ Image uploaded successfully, ID:', imageId)
-      
-      // Update state with imageId
-      setCurrentImage(prev => prev ? { ...prev, imageId } : null)
       setProcessingProgress(30)
+        let imageId = currentImage.imageId
+        if (!imageId) {
+          if (!hasTokenAccess || !sessionToken) {
+            throw new Error('Please verify your "4" token balance on BNB Chain to access upload features')
+          }
+          const uploadResponse = await apiService.uploadImageGated(currentImage.file, sessionToken)
+          if (!uploadResponse.success || !uploadResponse.data?.imageId) {
+            throw new Error(uploadResponse.error || 'Failed to upload image')
+          }
+          imageId = uploadResponse.data.imageId
+          console.log('✅ Image uploaded successfully, ID:', imageId)
+          // Update state with imageId
+          setCurrentImage(prev => prev ? { ...prev, imageId } : null)
+        } else {
+          console.log('ℹ️ Using existing imageId, skipping re-upload:', imageId)
+        }
 
       // Step 2: Process the uploaded image with four-finger magic
       console.log('🎨 Processing image with four-finger magic...')
       
-      const processResponse = await apiService.processFourFinger(imageId)
+      if (!sessionToken) {
+        throw new Error('Your session has expired. Please verify your "4" token balance again.')
+      }
+      
+      const processResponse = await apiService.processFourFinger(imageId, sessionToken, STRICT_FOUR_FINGER_PROMPT)
       
       if (!processResponse.success) {
         throw new Error(processResponse.error || 'Failed to process image')

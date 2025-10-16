@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tsconfigPaths from "vite-tsconfig-paths";
-import { traeBadgePlugin } from 'vite-plugin-trae-solo-badge';
+// import { traeBadgePlugin } from 'vite-plugin-trae-solo-badge';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 // https://vite.dev/config/
@@ -14,15 +14,15 @@ export default defineConfig({
         ],
       },
     }),
-    traeBadgePlugin({
-      variant: 'dark',
-      position: 'bottom-right',
-      prodOnly: true,
-      clickable: true,
-      clickUrl: 'https://www.trae.ai/solo?showJoin=1',
-      autoTheme: true,
-      autoThemeTarget: '#root'
-    }), 
+    // traeBadgePlugin({
+    //   variant: 'dark',
+    //   position: 'bottom-right',
+    //   prodOnly: true,
+    //   clickable: true,
+    //   clickUrl: 'https://www.trae.ai/solo?showJoin=1',
+    //   autoTheme: true,
+    //   autoThemeTarget: '#root'
+    // }), 
     tsconfigPaths(),
     nodePolyfills({
       // Whether to polyfill `node:` protocol imports.
@@ -32,7 +32,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:3001',
+        target: 'http://localhost:3002',
         changeOrigin: true,
         secure: false,
         configure: (proxy, _options) => {

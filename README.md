@@ -8,7 +8,7 @@ Four.Fun is a modern web application for digital image signing and verification 
 - **Digital Signatures**: Blockchain-based digital signing using Solana
 - **Wallet Integration**: Support for various Solana wallets
 - **History Tracking**: View and manage your signed images
-- **VWall Gallery**: Showcase of signed digital assets
+- **4 Movement Gallery**: Showcase of signed digital assets
 - **Real-time Processing**: Live updates on signature status
 
 ## Tech Stack
@@ -51,7 +51,7 @@ pnpm dev
 2. **Connect Wallet**: Connect your Solana wallet for signing
 3. **Sign Images**: Process and digitally sign your images
 4. **View History**: Track all your signed images
-5. **Browse VWall**: Explore the gallery of signed digital assets
+5. **Browse 4 Movement**: Explore the gallery of signed digital assets
 
 ## Development
 

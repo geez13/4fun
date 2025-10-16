@@ -75,7 +75,8 @@ export class GeminiService {
   private async createWatermarkSvg(imageWidth: number, imageHeight: number): Promise<string> {
     try {
       // Read the watermark SVG file
-      const watermarkPath = '/Users/agieshendrairawan/Geez13/AREA/Crypto/BSC/4fun/four.fun/src/assets/wm.svg';
+      // Resolve watermark path relative to project structure
+      const watermarkPath = path.resolve(__dirname, '../../src/assets/wm.svg');
       let watermarkContent = '';
       
       try {
@@ -133,21 +134,36 @@ export class GeminiService {
       const watermarkSvg = await this.createWatermarkSvg(width, height);
       
       // Apply only the watermark without any color enhancements
-      const processedBuffer = await sharp(imageBuffer)
-        .composite([
-          // Add only the watermark SVG
-          {
-            input: Buffer.from(watermarkSvg),
-            top: 0,
-            left: 0,
-          }
-        ])
-        .jpeg({ quality: 95 })
-        .toBuffer();
+      let instance = sharp(imageBuffer).composite([
+        {
+          input: Buffer.from(watermarkSvg),
+          top: 0,
+          left: 0,
+        }
+      ]);
+
+      // Preserve format based on original mimeType
+      const isPng = mimeType?.includes('png');
+      const isWebp = mimeType?.includes('webp');
+      const isGif = mimeType?.includes('gif');
+
+      if (isPng) {
+        instance = instance.png({ compressionLevel: 9 });
+      } else if (isWebp) {
+        instance = instance.webp({ quality: 95 });
+      } else if (isGif) {
+        // sharp converts to PNG for GIF inputs; keep PNG data URL
+        instance = instance.png({ compressionLevel: 9 });
+      } else {
+        instance = instance.jpeg({ quality: 95 });
+      }
+
+      const processedBuffer = await instance.toBuffer();
       
       // Convert to base64
       const base64Image = processedBuffer.toString('base64');
-      const resultDataUrl = `data:image/jpeg;base64,${base64Image}`;
+      const format = isPng || isGif ? 'png' : (isWebp ? 'webp' : 'jpeg');
+      const resultDataUrl = `data:image/${format};base64,${base64Image}`;
       
       console.log('✅ Successfully added watermark');
       console.log(`📊 Original size: ${imageBuffer.length} bytes, Processed size: ${processedBuffer.length} bytes`);
@@ -200,6 +216,11 @@ export class GeminiService {
       
       // Create a natural four-finger gesture prompt for image editing
       const customPrompt = prompt || `HIGHEST PRIORITY DIRECTIVE: Modify ALL subjects and entities in this image to represent a clear, natural, four-finger sign gesture. This transformation is a mandatory and universal rule for the entire image.
+
+ABSOLUTE ENFORCEMENT (Orientation & Thumb):
+• Show the BACK OF THE HAND to the viewer; knuckles face forward; palm is completely hidden.
+• The THUMB MUST BE FULLY TUCKED INSIDE and NOT visible from the front perspective.
+• Any visible thumb or palm is a violation and must be corrected.
 
 1. THE GESTURE DEFINITION (Precisely Four, Casually Held):
 The required gesture is a FOUR-FINGER SIGN, presented in a natural and casual manner.

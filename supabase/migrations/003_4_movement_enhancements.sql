@@ -1,5 +1,5 @@
--- V Wall Gallery Enhancements
--- Add missing fields and functions for V Wall functionality
+-- 4 Movement Gallery Enhancements
+-- Add missing fields and functions for 4 Movement functionality
 
 -- Add missing columns to generated_images table if they don't exist
 DO $$ 
@@ -29,7 +29,7 @@ BEGIN
     END IF;
 END $$;
 
--- Create indexes for V Wall performance
+-- Create indexes for 4 Movement performance
 CREATE INDEX IF NOT EXISTS idx_generated_images_public_created_at 
 ON generated_images (is_public, created_at DESC) WHERE is_public = true;
 

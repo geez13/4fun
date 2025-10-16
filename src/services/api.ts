@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+const API_BASE_URL = import.meta.env.VITE_API_URL || ''
 
 export interface ApiResponse<T = any> {
   success: boolean
@@ -68,24 +68,29 @@ class ApiService {
   private readonly maxRetries = 3
   private readonly retryDelay = 1000 // 1 second
 
-  private getAuthHeaders(): HeadersInit {
-    const token = localStorage.getItem('auth-storage')
-    if (token) {
+  private getAuthHeaders(sessionToken?: string): Record<string, string> {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    let token = sessionToken;
+
+    if (!token) {
       try {
-        const parsed = JSON.parse(token)
-        if (parsed.state?.token) {
-          return {
-            'Authorization': `Bearer ${parsed.state.token}`,
-            'Content-Type': 'application/json',
-          }
+        const storedAuth = localStorage.getItem('auth-storage');
+        if (storedAuth) {
+          token = JSON.parse(storedAuth).state?.token;
         }
       } catch (error) {
-        console.error('Error parsing auth token:', error)
+        console.error('Error parsing auth token:', error);
       }
     }
-    return {
-      'Content-Type': 'application/json',
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
     }
+
+    return headers;
   }
 
   private async delay(ms: number): Promise<void> {
@@ -311,7 +316,7 @@ class ApiService {
         }
       }
 
-      return await this.fetchWithRetry<{ imageId: string; originalUrl: string; fileName: string; fileSize: number }>(`${API_BASE_URL}/api/images/upload-gated`, {
+      return await this.fetchWithRetry<{ imageId: string; originalUrl: string; fileName: string; fileSize: number }>(`${API_BASE_URL}/api/images/upload`, {
         method: 'POST',
         headers,
         body: formData,
@@ -357,15 +362,37 @@ class ApiService {
     }
   }
 
-  async processFourFinger(imageId: string): Promise<ApiResponse<{ processedImageUrl: string }>> {
+  async processFourFinger(imageId: string, sessionToken: string, prompt?: string): Promise<ApiResponse<{ processedImageUrl: string }>> {
     try {
+      // Token-gated processing requires X-Session-Token for middleware
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+        'X-Session-Token': sessionToken,
+      }
+
+      // Attach auth token if available (for additional auth layers)
+      const stored = localStorage.getItem('auth-storage')
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored)
+          if (parsed.state?.token) {
+            headers['Authorization'] = `Bearer ${parsed.state.token}`
+          }
+        } catch (error) {
+          console.error('Error parsing auth token:', error)
+        }
+      }
+
+      // Build request body; include prompt if provided
+      const bodyPayload: any = {}
+      if (prompt && typeof prompt === 'string' && prompt.trim().length > 0) {
+        bodyPayload.prompt = prompt
+      }
+
       return await this.fetchWithRetry<{ processedImageUrl: string }>(`${API_BASE_URL}/api/images/${imageId}/process-vsign`, {
         method: 'POST',
-        headers: {
-          ...this.getAuthHeaders(),
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({}),
+        headers,
+        body: JSON.stringify(bodyPayload),
       })
     } catch (error) {
       if (error instanceof ApiServiceError) {

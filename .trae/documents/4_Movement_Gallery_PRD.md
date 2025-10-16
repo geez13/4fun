@@ -1,10 +1,10 @@
-# V Wall Gallery - Product Requirements Document
+# 4 Movement Gallery - Product Requirements Document
 
 ## 1. Product Overview
 
-V Wall is a borderless, full-screen public gallery that seamlessly displays all generated V-sign images in an optimized viewing experience. The page serves as a community showcase where users can explore the creative output of the ✌️-Sign PFP-Gen platform in a visually stunning, Pinterest-style layout.
+4 Movement is a borderless, full-screen public gallery that seamlessly displays all generated V-sign images in an optimized viewing experience. The page serves as a community showcase where users can explore the creative output of the ✌️-Sign PFP-Gen platform in a visually stunning, Pinterest-style layout.
 
-The V Wall transforms the traditional gallery concept into an immersive, infinite browsing experience that celebrates the community's creativity while maintaining optimal performance across all devices and network conditions.
+The 4 Movement transforms the traditional gallery concept into an immersive, infinite browsing experience that celebrates the community's creativity while maintaining optimal performance across all devices and network conditions.
 
 ## 2. Core Features
 
@@ -18,9 +18,9 @@ The V Wall transforms the traditional gallery concept into an immersive, infinit
 
 ### 2.2 Feature Module
 
-Our V Wall requirements consist of the following main components:
+Our 4 Movement requirements consist of the following main components:
 
-1. **V Wall Gallery Page**: Masonry grid layout, infinite scroll, image optimization, moderation controls
+1. **4 Movement Gallery Page**: Masonry grid layout, infinite scroll, image optimization, moderation controls
 2. **Image Detail Modal**: Full-screen image view, metadata display, sharing options, download functionality
 3. **Moderation Panel**: Safe-mode toggles, content filtering, reporting system
 
@@ -28,11 +28,11 @@ Our V Wall requirements consist of the following main components:
 
 | Page Name | Module Name | Feature description |
 |-----------|-------------|---------------------|
-| V Wall Gallery | Masonry Grid System | Display images in responsive Pinterest-style layout with zero gaps. Implement intelligent column distribution based on screen size and image aspect ratios |
-| V Wall Gallery | Infinite Scroll Engine | Load images in batches of 20-50 items with smooth scrolling. Implement virtual scrolling for memory optimization and progressive loading indicators |
-| V Wall Gallery | Lazy Loading System | Load images progressively with blur-to-sharp transitions. Include skeleton placeholders and intelligent preloading based on scroll velocity |
-| V Wall Gallery | Interactive Controls | Hover effects with subtle scaling and overlay information. Touch-optimized gestures for mobile including pinch-to-zoom preview |
-| V Wall Gallery | Safe Mode Toggle | Per-image moderation controls with instant filtering. Community-driven content flagging system with real-time updates |
+| 4 Movement Gallery | Masonry Grid System | Display images in responsive Pinterest-style layout with zero gaps. Implement intelligent column distribution based on screen size and image aspect ratios |
+| 4 Movement Gallery | Infinite Scroll Engine | Load images in batches of 20-50 items with smooth scrolling. Implement virtual scrolling for memory optimization and progressive loading indicators |
+| 4 Movement Gallery | Lazy Loading System | Load images progressively with blur-to-sharp transitions. Include skeleton placeholders and intelligent preloading based on scroll velocity |
+| 4 Movement Gallery | Interactive Controls | Hover effects with subtle scaling and overlay information. Touch-optimized gestures for mobile including pinch-to-zoom preview |
+| 4 Movement Gallery | Safe Mode Toggle | Per-image moderation controls with instant filtering. Community-driven content flagging system with real-time updates |
 | Image Detail Modal | Full-Screen Viewer | Modal overlay with high-resolution image display. Include zoom functionality, metadata panel, and sharing options |
 | Image Detail Modal | Navigation Controls | Previous/next image navigation with keyboard shortcuts. Smooth transitions between images with preloading |
 | Moderation Panel | Content Management | Admin interface for bulk moderation actions. Analytics dashboard showing engagement metrics and content statistics |
@@ -40,7 +40,7 @@ Our V Wall requirements consist of the following main components:
 ## 3. Core Process
 
 **Public User Flow:**
-Users access the V Wall directly from the main navigation. The page loads with an initial batch of images in a seamless masonry layout. As users scroll, new images load automatically with smooth animations. Users can hover over images to see basic information and click to view full-screen details. Safe-mode toggle allows filtering of potentially sensitive content.
+Users access the 4 Movement directly from the main navigation. The page loads with an initial batch of images in a seamless masonry layout. As users scroll, new images load automatically with smooth animations. Users can hover over images to see basic information and click to view full-screen details. Safe-mode toggle allows filtering of potentially sensitive content.
 
 **Registered User Flow:**
 Registered users follow the same browsing experience but gain additional capabilities including high-resolution downloads, content reporting, and personalized viewing preferences. They can save favorite images and access viewing history.
@@ -50,7 +50,7 @@ Moderators access additional controls for content management, including bulk mod
 
 ```mermaid
 graph TD
-    A[V Wall Landing] --> B[Load Initial Image Batch]
+    A[4 Movement Landing] --> B[Load Initial Image Batch]
     B --> C[Display Masonry Grid]
     C --> D[User Scrolls]
     D --> E[Infinite Scroll Trigger]
@@ -82,12 +82,12 @@ graph TD
 
 | Page Name | Module Name | UI Elements |
 |-----------|-------------|-------------|
-| V Wall Gallery | Masonry Grid | Borderless image tiles with 2-6 columns based on screen size. Hover overlay with subtle dark gradient and action icons. Progressive blur-to-sharp loading animation |
-| V Wall Gallery | Navigation Header | Minimal transparent header with V Wall title and safe-mode toggle. Floating design that appears/disappears on scroll |
-| V Wall Gallery | Loading States | Skeleton placeholders matching masonry layout. Shimmer animation effect during loading. Smooth fade-in transitions for new content |
+| 4 Movement Gallery | Masonry Grid | Borderless image tiles with 2-6 columns based on screen size. Hover overlay with subtle dark gradient and action icons. Progressive blur-to-sharp loading animation |
+| 4 Movement Gallery | Navigation Header | Minimal transparent header with 4 Movement title and safe-mode toggle. Floating design that appears/disappears on scroll |
+| 4 Movement Gallery | Loading States | Skeleton placeholders matching masonry layout. Shimmer animation effect during loading. Smooth fade-in transitions for new content |
 | Image Detail Modal | Full-Screen Overlay | Dark backdrop with centered image. Minimal UI controls with auto-hide functionality. Smooth zoom and pan interactions |
 | Image Detail Modal | Metadata Panel | Sliding panel with image details, creation date, and sharing options. Glassmorphism design with backdrop blur |
 
 ### 4.3 Responsiveness
 
-The V Wall is designed mobile-first with adaptive column layouts: 2 columns on mobile (320px+), 3 columns on tablet (768px+), 4-6 columns on desktop (1024px+). Touch interactions are optimized for mobile with gesture support for navigation and zooming. The interface adapts seamlessly to both portrait and landscape orientations with intelligent column redistribution.
+The 4 Movement is designed mobile-first with adaptive column layouts: 2 columns on mobile (320px+), 3 columns on tablet (768px+), 4-6 columns on desktop (1024px+). Touch interactions are optimized for mobile with gesture support for navigation and zooming. The interface adapts seamlessly to both portrait and landscape orientations with intelligent column redistribution.

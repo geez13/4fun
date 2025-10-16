@@ -109,23 +109,64 @@ export const TokenGateChecker: React.FC<TokenGateCheckerProps> = ({
       // Sign the message with better error handling
       let signature: string;
       try {
-        signature = await signMessageAsync({ account: address, message });
+        signature = await signMessageAsync({ 
+          message,
+          account: address
+        });
       } catch (signError: any) {
         console.error('Message signing failed:', signError);
         
-        // Handle specific wallet errors
+        // Handle specific wallet errors with more detailed error checking
         let errorMessage = 'Failed to sign message. Please try again or check your wallet connection.';
-        if (signError?.message?.includes('User rejected')) {
-          errorMessage = 'Message signing was cancelled. Please try again.';
-        } else if (signError?.message?.includes('network')) {
+        
+        // Check for user rejection errors
+        if (signError?.name === 'UserRejectedRequestError' || 
+            signError?.message?.includes('User rejected') ||
+            signError?.message?.includes('user rejected') ||
+            signError?.message?.includes('User denied') ||
+            signError?.code === 4001) {
+          errorMessage = 'Message signing was cancelled. Please try again to verify your token access.';
+          toast.info('Please approve the message signing request in your wallet to continue.');
+        } 
+        // Check for network errors
+        else if (signError?.message?.includes('network') || 
+                 signError?.message?.includes('Network')) {
           errorMessage = 'Network error. Please check your connection and try again.';
-        } else if (signError?.message?.includes('connector')) {
-          errorMessage = 'Wallet connection error. Please reconnect your wallet and try again.';
+        } 
+          // Check for connector/wallet connection errors
+          else if (signError?.message?.includes('connector') || 
+                   signError?.message?.includes('getChainId') ||
+                   signError?.message?.includes('connection') ||
+                   signError?.message?.includes('not a function')) {
+            // Attempt a direct wallet signing fallback to avoid connector chainId issues
+            if (typeof window !== 'undefined' && (window as any)?.ethereum) {
+            try {
+              signature = await (window as any).ethereum.request({
+                method: 'personal_sign',
+                params: [message, address]
+              });
+              errorMessage = '';
+            } catch (fallbackError: any) {
+              console.error('Fallback personal_sign failed:', fallbackError);
+              errorMessage = 'Wallet connection error. Please reconnect your wallet and try again.';
+              toast.error('Please reconnect your wallet and try again.');
+            }
+            } else {
+              errorMessage = 'Wallet connection error. Please reconnect your wallet and try again.';
+              toast.error('Please reconnect your wallet and try again.');
+            }
+          }
+        // Check for chain/network mismatch
+        else if (signError?.message?.includes('chain') || 
+                 signError?.message?.includes('Chain')) {
+          errorMessage = 'Please ensure you are connected to the correct network (BNB Chain).';
         }
         
         throw new Error(errorMessage);
       }
-
+          if (!signature) {
+            throw new Error(errorMessage);
+          }
       // Send verification request to backend using API service
       const result = await apiService.verifyTokenAccess(
         address,

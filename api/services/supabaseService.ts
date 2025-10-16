@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 import { v4 as uuidv4 } from 'uuid';
-import { SupabaseConnectionManager, ConnectionConfig, ConnectionMetrics } from '../lib/supabaseConnectionManager';
-import { securityLogger, createLogContext, measurePerformance } from '../lib/logger';
+import { SupabaseConnectionManager, ConnectionConfig, ConnectionMetrics } from '../lib/supabaseConnectionManager.js';
+import { securityLogger, createLogContext, measurePerformance } from '../lib/logger.js';
 
 dotenv.config();
 

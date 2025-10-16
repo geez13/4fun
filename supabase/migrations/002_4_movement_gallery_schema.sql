@@ -1,7 +1,7 @@
--- V Wall Gallery Enhancement Migration
--- This migration enhances the existing schema for V Wall gallery functionality
+-- 4 Movement Gallery Enhancement Migration
+-- This migration enhances the existing schema for 4 Movement gallery functionality
 
--- Add new columns to images table for V Wall features
+-- Add new columns to images table for 4 Movement features
 ALTER TABLE public.images 
 ADD COLUMN IF NOT EXISTS thumbnail_url TEXT,
 ADD COLUMN IF NOT EXISTS optimized_url TEXT,
@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS public.moderation_logs (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Create indexes for optimal V Wall performance
+-- Create indexes for optimal 4 Movement performance
 CREATE INDEX IF NOT EXISTS idx_images_public_created_at ON public.images(is_public, created_at DESC) WHERE is_public = true;
 CREATE INDEX IF NOT EXISTS idx_images_safe_mode ON public.images(safe_mode, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_images_aspect_ratio ON public.images(aspect_ratio);
@@ -45,7 +45,7 @@ CREATE INDEX IF NOT EXISTS idx_moderation_logs_image_id ON public.moderation_log
 ALTER TABLE public.image_metadata ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.moderation_logs ENABLE ROW LEVEL SECURITY;
 
--- Public read access for V Wall gallery
+-- Public read access for 4 Movement gallery
 CREATE POLICY "Public images are viewable by everyone" ON public.images
     FOR SELECT USING (is_public = true);
 
@@ -204,7 +204,7 @@ GRANT EXECUTE ON FUNCTION public.get_gallery_images TO authenticated;
 GRANT EXECUTE ON FUNCTION public.increment_image_view_count TO authenticated;
 GRANT EXECUTE ON FUNCTION public.update_image_moderation TO authenticated;
 
--- Insert sample data for testing V Wall
+-- Insert sample data for testing 4 Movement
 INSERT INTO public.images (
     user_id, 
     original_url, 

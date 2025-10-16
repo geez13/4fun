@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-import { supabase } from './supabaseService';
+import { supabase } from './supabaseService.js';
 
 // "4" token contract address on BNB Chain
 const VERIFICATION_TOKEN_ADDRESS = '0x0a43fc31a73013089df59194872ecae4cae14444'; // "4" token BEP-20 contract address

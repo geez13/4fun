@@ -4,7 +4,7 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import { securityLogger } from '../lib/logger';
+import { securityLogger } from '../lib/logger.js';
 
 interface RateLimitConfig {
   windowMs: number;           // Time window in milliseconds

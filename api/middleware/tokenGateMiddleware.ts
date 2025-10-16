@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { validateUploadSession } from '../services/tokenVerificationService';
+import { validateUploadSession } from '../services/tokenVerificationService.js';
 
 // Extend Request interface to include token verification data
 declare global {
@@ -30,7 +30,7 @@ export async function requireTokenAccess(
         success: false,
         error: 'Token verification required',
         code: 'TOKEN_REQUIRED',
-        message: 'Please verify your SOL token balance to access upload features'
+        message: 'Please verify your "4" token balance on BNB Chain to access upload features'
       });
       return;
     }
@@ -43,7 +43,7 @@ export async function requireTokenAccess(
         success: false,
         error: 'Invalid or expired token session',
         code: 'TOKEN_INVALID',
-        message: 'Your token verification has expired. Please verify your SOL balance again.'
+        message: 'Your token verification has expired. Please verify your "4" token balance on BNB Chain again.'
       });
       return;
     }

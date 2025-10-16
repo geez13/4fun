@@ -3,7 +3,7 @@ const http = require('http');
 const options = {
   hostname: 'localhost',
   port: 5173,
-  path: '/api/vwall/images?limit=3',
+  path: '/api/fourmovement/images?limit=3',
   method: 'GET'
 };
 

@@ -8,8 +8,8 @@ import { ImageModal } from '@/components/ImageModal';
 
 const logoUrl = '/4logo.svg';
 
-// Custom hook for VWall images that uses the VWall API endpoint
-const useVWallImages = () => {
+// Custom hook for 4 Movement images that uses the 4 Movement API endpoint
+const useFourMovementImages = () => {
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,10 +23,10 @@ const useVWallImages = () => {
     setError(null);
 
     try {
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-      const url = `${baseUrl}/api/vwall/images?page=${pageNum}&limit=20`;
+      // Use relative path to leverage Vite proxy configuration
+      const url = `/api/fourmovement/images?page=${pageNum}&limit=20`;
       
-      console.log('🔍 VWall: Fetching images from:', url);
+      console.log('🔍 4 Movement: Fetching images from:', url);
       
       const response = await fetch(url, {
         headers: {
@@ -39,21 +39,22 @@ const useVWallImages = () => {
       }
 
       const result = await response.json();
-      console.log('📊 VWall: API response:', result);
+      console.log('📊 4 Movement: API response:', result);
 
       if (result.success) {
         const newImages = result.data || [];
-        console.log('🖼️ VWall: Received images:', newImages.length, 'images');
-        console.log('🔗 VWall: First image URL:', newImages[0]?.image_url);
+        console.log('🖼️ 4 Movement: Received images:', newImages.length, 'images');
+        console.log('🔗 4 Movement: First image URL:', newImages[0]?.image_url);
         
         setImages(prev => reset ? newImages : [...prev, ...newImages]);
         setHasMore(result.pagination?.hasMore || false);
+        setPage(pageNum + 1);
       } else {
         throw new Error(result.error || 'Failed to fetch images');
       }
-    } catch (err: any) {
-      console.error('❌ VWall: Fetch error:', err);
-      setError(err.message || 'An error occurred while fetching images');
+    } catch (err) {
+      console.error('❌ 4 Movement: Error fetching images:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load images');
     } finally {
       setLoading(false);
     }
@@ -61,22 +62,21 @@ const useVWallImages = () => {
 
   const loadMore = useCallback(() => {
     if (!loading && hasMore) {
-      const nextPage = page + 1;
-      setPage(nextPage);
-      fetchImages(nextPage);
+      fetchImages(page);
     }
-  }, [loading, hasMore, page, fetchImages]);
+  }, [fetchImages, loading, hasMore, page]);
 
   const refresh = useCallback(() => {
-    setPage(1);
     setImages([]);
+    setPage(1);
     setHasMore(true);
+    setError(null);
     fetchImages(1, true);
   }, [fetchImages]);
 
   // Initial load
   React.useEffect(() => {
-    refresh();
+    fetchImages(1, true);
   }, []);
 
   return {
@@ -89,9 +89,9 @@ const useVWallImages = () => {
   };
 };
 
-export const VWall: React.FC = () => {
+export const FourMovement: React.FC = () => {
   const navigate = useNavigate();
-  const { images, loading, error, hasMore, loadMore, refresh } = useVWallImages();
+  const { images, loading, error, hasMore, loadMore, refresh } = useFourMovementImages();
   const [selectedImage, setSelectedImage] = useState<GalleryImage | null>(null);
 
   const handleBack = () => {
@@ -130,7 +130,7 @@ export const VWall: React.FC = () => {
                 alt="四.fun" 
                 className="w-8 h-8"
               />
-              <h1 className="text-xl font-bold text-white">V Wall Gallery</h1>
+              <h1 className="text-xl font-bold text-white">4 Movement Gallery</h1>
             </div>
             
             <WalletConnector />

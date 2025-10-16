@@ -153,7 +153,7 @@ export const GenerationInterface: React.FC<GenerationInterfaceProps> = ({
 
   const handleViewInGallery = () => {
     if (state.generationId) {
-      window.open(`/vwall?highlight=${state.generationId}`, '_blank');
+      window.open(`/fourmovement?highlight=${state.generationId}`, '_blank');
     }
   };
 

@@ -44,11 +44,11 @@ export default function Layout({ children }: LayoutProps) {
                 <span>Editor</span>
               </Link>
               <Link
-                to="/vwall"
+                to="/fourmovement"
                 className="flex items-center space-x-1 text-gray-300 hover:text-binance-primary transition-colors"
               >
                 <Grid3X3 className="w-4 h-4" />
-                <span>V Wall</span>
+                <span>4 Movement</span>
               </Link>
               <Link
                 to="/lore"

@@ -1,11 +1,11 @@
-# V Wall Gallery - Technical Architecture Document
+# 4 Movement Gallery - Technical Architecture Document
 
 ## 1. Architecture Design
 
 ```mermaid
 graph TD
     A[User Browser] --> B[React Frontend Application]
-    B --> C[V Wall Components]
+    B --> C[4 Movement Components]
     C --> D[Image Service Layer]
     D --> E[Supabase Database]
     D --> F[CDN/Storage Service]
@@ -44,7 +44,7 @@ graph TD
 
 | Route | Purpose |
 |-------|---------|
-| /v-wall | Main V Wall gallery page with masonry grid layout |
+| /fourmovement | Main 4 Movement gallery page with masonry grid layout |
 | /v-wall/:imageId | Direct link to specific image in modal view |
 | /v-wall/moderation | Admin moderation panel for content management |
 
@@ -119,7 +119,7 @@ Response:
 
 ```mermaid
 graph TD
-    A[Client / V Wall Frontend] --> B[API Controller Layer]
+    A[Client / 4 Movement Frontend] --> B[API Controller Layer]
     B --> C[Image Service Layer]
     C --> D[Database Repository Layer]
     D --> E[(Supabase Database)]
@@ -200,9 +200,9 @@ erDiagram
 
 ### 6.2 Data Definition Language
 
-**Images Table (Enhanced for V Wall)**
+**Images Table (Enhanced for 4 Movement)**
 ```sql
--- Enhanced images table for V Wall functionality
+-- Enhanced images table for 4 Movement functionality
 CREATE TABLE images (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -243,7 +243,7 @@ CREATE TABLE moderation_logs (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Indexes for optimal V Wall performance
+-- Indexes for optimal 4 Movement performance
 CREATE INDEX idx_images_public_created_at ON images(is_public, created_at DESC) WHERE is_public = true;
 CREATE INDEX idx_images_safe_mode ON images(safe_mode, created_at DESC);
 CREATE INDEX idx_images_aspect_ratio ON images(aspect_ratio);
@@ -255,7 +255,7 @@ ALTER TABLE images ENABLE ROW LEVEL SECURITY;
 ALTER TABLE image_metadata ENABLE ROW LEVEL SECURITY;
 ALTER TABLE moderation_logs ENABLE ROW LEVEL SECURITY;
 
--- Public read access for V Wall
+-- Public read access for 4 Movement
 CREATE POLICY "Public images are viewable by everyone" ON images
     FOR SELECT USING (is_public = true);
 
@@ -292,8 +292,8 @@ VALUES
 ### 7.1 Frontend Component Structure
 
 ```
-src/pages/VWall/
-├── VWall.tsx                 # Main page component
+src/pages/FourMovement/
+├── FourMovement.tsx                 # Main page component
 ├── components/
 │   ├── MasonryGrid.tsx       # Masonry layout container
 │   ├── ImageTile.tsx         # Individual image component

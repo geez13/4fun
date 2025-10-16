@@ -53,7 +53,7 @@ export default function Home() {
       <section className="relative min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 overflow-hidden">
         {/* Background Effects */}
         <div className="absolute inset-0 bg-black"></div>
-        <div className="absolute inset-0 bg-gradient-to-r from-green-400/10 to-green-500/10"></div>
+        <div className="absolute inset-0 bg-black"></div>
         
         <div className="relative z-10 text-center max-w-6xl mx-auto">
           {/* Animated Logo */}

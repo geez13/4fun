@@ -1,4 +1,4 @@
--- Insert sample generated images for testing V Wall
+-- Insert sample generated images for testing 4 Movement
 INSERT INTO generated_images (
   owner_pubkey,
   image_url,
