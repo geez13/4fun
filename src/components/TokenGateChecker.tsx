@@ -164,8 +164,9 @@ export const TokenGateChecker: React.FC<TokenGateCheckerProps> = ({
         
         throw new Error(errorMessage);
       }
+          // Safety check: ensure we have a valid signature even if no error was thrown
           if (!signature) {
-            throw new Error(errorMessage);
+            throw new Error('Signature was not obtained. Please approve the signing request in your wallet and try again.');
           }
       // Send verification request to backend using API service
       const result = await apiService.verifyTokenAccess(
