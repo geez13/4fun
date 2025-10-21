@@ -1,6 +1,6 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
-import { Image, Home, Images, BookOpen, Grid3X3 } from 'lucide-react'
+import { Link, useLocation } from 'react-router-dom'
+import { Image, Home, Images, BookOpen, Grid3X3, Twitter, Send } from 'lucide-react'
 import { WalletConnector } from '@/components/WalletConnector'
 import { useAccount } from 'wagmi'
 
@@ -12,6 +12,12 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   const { isConnected } = useAccount()
+  const location = useLocation()
+
+  const socialLinks = {
+    x: 'https://x.com/fourfun_meme',
+    telegram: 'https://t.me/fourfun_meme',
+  }
 
   return (
     <div className="min-h-screen bg-black">
@@ -76,9 +82,37 @@ export default function Layout({ children }: LayoutProps) {
       {/* Footer */}
       <footer className="bg-black backdrop-blur-md border-t border-dark-700 mt-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center">
-            <p className="text-gray-400">&copy; 2024 四-Sign PFP-Gen. Powered by Advanced 四.fun Technology.</p>
-          </div>
+          {location.pathname === '/' ? (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <p className="text-gray-400 text-sm">© 2024 四-Sign PFP-Gen. Powered by Advanced 四.fun Technology.</p>
+              <div className="flex items-center gap-3 flex-wrap">
+                <a
+                  href={socialLinks.x}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Visit our X (Twitter) profile"
+                  className="inline-flex items-center gap-2 rounded-md border border-dark-700 bg-dark-900/40 px-3 py-2 text-gray-300 hover:text-white hover:bg-dark-800 transition-colors"
+                >
+                  <Twitter className="w-5 h-5" />
+                  <span className="text-sm">X</span>
+                </a>
+                <a
+                  href={socialLinks.telegram}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Join our Telegram"
+                  className="inline-flex items-center gap-2 rounded-md border border-dark-700 bg-dark-900/40 px-3 py-2 text-gray-300 hover:text-white hover:bg-dark-800 transition-colors"
+                >
+                  <Send className="w-5 h-5" />
+                  <span className="text-sm">Telegram</span>
+                </a>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center">
+              <p className="text-gray-400 text-sm">© 2025 四.fun. Powered by Advanced 四.fun Technology.</p>
+            </div>
+          )}
         </div>
       </footer>
     </div>
